@@ -5,7 +5,7 @@ import random,string,secrets
 
 def send_otp(email):
     subject = "Your OTP for Login in Smart Event Photo Management"
-    email_sender = settings.EMAIL_HOST
+    email_sender = settings.EMAIL_HOST_USER
     otp = random.randint(100000,999999)
     if cache.get(email) is not None:
         otp = cache.get(email)
@@ -26,3 +26,12 @@ def verify_otp(email,otp):
         cache.delete(email)
         return True
     return False
+
+def send_password(email,password=None):
+    if password is None:
+        password = passwordgenerator()
+    subject="Your Password for Login into Smart-Event-Photo-Management App"
+    message=f"Your Password is {password}.If you want You can Change it later after joining."
+    from_email=settings.EMAIL_HOST_USER
+    send_mail(subject,message,from_email,[email])
+                

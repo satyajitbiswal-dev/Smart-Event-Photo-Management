@@ -46,6 +46,7 @@ class VerifyOTP(APIView):
             'message':'Wrong credentials',
             'status':status.HTTP_400_BAD_REQUEST
         })
-
-
+    
 otp_verify = VerifyOTP.as_view()
+
+
