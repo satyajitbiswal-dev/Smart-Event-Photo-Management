@@ -7,17 +7,10 @@ from .serializers import EventSerializer
 
 # Create your views here.
 
-#Get Event Details
-class EventDetails(generics.RetrieveAPIView):
-    queryset = Event.objects.all()
-    serializer_class = EventSerializer
-    lookup_field = 'event_name' #slug daaldo bhai
-
-event_details = EventDetails.as_view()
-
+#Get Event Details and Update
 class EventDetailsUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    lookup_field = 'event_name'
+    lookup_field = 'slug'
 
 event_details_update = EventDetailsUpdateView.as_view()

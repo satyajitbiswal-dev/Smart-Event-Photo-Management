@@ -10,7 +10,7 @@ class EventSerializer(serializers.ModelSerializer):
     users = User.objects.all()
     event_coordinator = serializers.SlugRelatedField(slug_field = 'email',queryset = User.objects.all())
     event_photographer = serializers.SlugRelatedField(slug_field = 'email',queryset = User.objects.all())
-    event_members = serializers.SlugRelatedField(many=True,slug_field = 'email',queryset = User.objects.all())
+    event_members = serializers.SlugRelatedField(many=True,slug_field = 'email',queryset = User.objects.all(),required=False)
     class Meta:
         model = Event
         fields = [
@@ -20,7 +20,7 @@ class EventSerializer(serializers.ModelSerializer):
             'description',
             'date_time',
             'qr_code',
-            'event_members'
+            'event_members',
         ]
 
     def validate_event_coordinator(self,value):

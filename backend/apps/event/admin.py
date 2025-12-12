@@ -5,6 +5,7 @@ from .serializers import EventSerializer
 from accounts.permissions import IsAdminUser
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views  import APIView
+from .utils import generate_slug
 
 # Register your models here.
 
@@ -15,6 +16,7 @@ class EventCreateView(generics.CreateAPIView):
     serializer_class = EventSerializer
     permission_classes =[IsAdminUser]
     authentication_classes = [TokenAuthentication]
+
     
 event_create = EventCreateView.as_view()
 
