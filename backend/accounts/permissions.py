@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 
-class IsMember(BasePermission):
+class IsMemberUser(BasePermission):
      message = "You must be a member to get this"
      def has_permission(self,request,view):
           return bool(
@@ -10,8 +10,8 @@ class IsMember(BasePermission):
                and request.user.role == "M"
           )
 
-class IsAdmin(BasePermission):
-     message = "You must be an Admin to get this"
+class IsAdminUser(BasePermission):
+     message = "You must be an Admin to access this"
      def has_permission(self,request,view):
           return bool(
                request.user
@@ -19,7 +19,7 @@ class IsAdmin(BasePermission):
                and request.user.role == "A"
           )
 
-class IsPublic(BasePermission):
+class IsPublicUser(BasePermission):
      message = "You must be an Admin to get this"
      def has_permission(self,request,view):
           return bool(

@@ -53,3 +53,11 @@ class UserProfileUpdateView(generics.RetrieveUpdateAPIView):
         if obj != self.request.user:
            raise PermissionDenied("You cannot view other user's profile")
         return obj
+
+class ListMembers(generics.ListAPIView):
+    queryset = User.objects.exclude(role = 'P')
+    lookup_field = 'username'
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+    

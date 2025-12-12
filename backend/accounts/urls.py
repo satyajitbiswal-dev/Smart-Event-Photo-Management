@@ -5,6 +5,7 @@ from . import admin
 
 urlpatterns = [
     path('', views.home_view),
+    path('users/', views.ListMembers.as_view()),
     path('profile/<str:username>/', views.profile_view),
     path('update/<str:username>/', views.UserProfileUpdateView.as_view()),
     path('public/send-otp/', userlogin.otp_send),

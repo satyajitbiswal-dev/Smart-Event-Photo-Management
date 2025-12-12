@@ -12,7 +12,8 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'department',
             'batch',
-            'profile_pic'
+            'profile_pic',
+            'role'
         ]
 
 class PublicUserSerializer(serializers.ModelSerializer):
