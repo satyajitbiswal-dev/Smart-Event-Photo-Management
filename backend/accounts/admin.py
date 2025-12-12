@@ -4,17 +4,18 @@ from .models import User
 from rest_framework.views import APIView
 from .utils import send_password,passwordgenerator
 from django.conf import settings
-from .serializers import UserSerializer,EmailRoleSerializer, PublicLoginSerializer
+from .serializers import UserCreateSerializer,EmailRoleSerializer, PublicLoginSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from .permissions import GLOBAL_ROLE
+from django.utils.crypto import get_random_string
 
 admin.site.register(User,UserAdmin)
 
 #add User manual (Member and Public) to the app
 class AddUser(APIView):
     def post(self,request,*args,**kwargs):
-        serializer = UserSerializer(data = request.data)
+        serializer = UserCreateSerializer(data = request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data.get('email')
         role = serializer.validated_data.get('role')
@@ -26,7 +27,9 @@ class AddUser(APIView):
             User.objects.create_user(email=email,password=password)
             send_password(email,password)
         elif role == 'A':
-            username = email.split('@')[0]
+            username = email.split("@")[0]
+            while User.objects.filter(username=username).exists():
+                username = f"{username}_{get_random_string(4).lower()}"
             User.objects.create_superuser(email=email,password=password,username=username)
             send_password(email,password)
         return Response({

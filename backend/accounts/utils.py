@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django.conf import settings
 import random,string,secrets
 
+
 def send_otp(email):
     subject = "Your OTP for Login in Smart Event Photo Management"
     email_sender = settings.EMAIL_HOST_USER

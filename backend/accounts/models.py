@@ -13,12 +13,13 @@ class User(AbstractUser):
 
     #For every User whether Public or Member
     email = models.EmailField(_('email address'),unique=True,blank=False)
-    username = models.CharField(max_length=150) #created from email at the time of registration
+    username = models.CharField(max_length=150,unique=True) #created from email at the time of registration
     role = models.CharField(
         max_length=1,
         choices=UserRole.choices,
         default=UserRole.PUBLIC
     )
+    name = models.CharField(max_length=100,null=True,blank=True)
 
     #extra fields for members and Admin
     enrollment = models.CharField(max_length=8,blank=True,null=True)

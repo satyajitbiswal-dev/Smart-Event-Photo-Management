@@ -1,6 +1,13 @@
 from django.contrib.auth.models import UserManager
 from django.utils.translation import gettext_lazy as _
 from .utils import passwordgenerator
+from django.utils.crypto import get_random_string
+
+def generate_unique_username(self, base_username):
+    username = base_username
+    while self.model.objects.filter(username=username).exists():
+        username = f"{base_username}_{get_random_string(4).lower()}"
+    return username
 
 class CustomUserManager(UserManager):
     #Members Only
@@ -11,7 +18,8 @@ class CustomUserManager(UserManager):
         email = self.normalize_email(email)
 
         if username is None:
-            username = email.split("@")[0]
+            base_username = email.split("@")[0]
+            username = self.generate_unique_username(base_username)
         
         extra_fields.setdefault('is_staff',True)
         extra_fields.setdefault('is_superuser',False)
@@ -32,7 +40,8 @@ class CustomUserManager(UserManager):
         email = self.normalize_email(email)
 
         if username is None:
-            username = email.split("@")[0]
+            base_username = email.split("@")[0]
+            username = self.generate_unique_username(base_username)
         
         extra_fields.setdefault('is_staff',False)
         extra_fields.setdefault('is_superuser',False)
@@ -50,14 +59,18 @@ class CustomUserManager(UserManager):
         if not email:
             raise ValueError(_('You must provide an email in order to Login'))
         email = self.normalize_email(email)
-        username = data.get("name") or  email.split("@")[0]
+        name = data.get("name") 
         enrollment = data.get("enrollment") or None
         department = data.get("department") or None
+        base_username = (data.get("name") or email.split("@")[0]).replace(" ", "").lower()
+        username = self.generate_unique_username(base_username)
+
 
         extra_fields.setdefault('is_staff',False)
         extra_fields.setdefault('is_superuser',False)
         extra_fields.setdefault('is_active',False)
         user = self.model(email=email,
+                          name = name,
                           username=username,
                           enrollment=enrollment ,
                           department = department,

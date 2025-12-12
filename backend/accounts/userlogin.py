@@ -2,9 +2,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from .utils import send_otp,verify_otp
-from .serializers import PublicLoginSerializer
+from .serializers import PublicLoginSerializer,EmailPasswordLoginSerializer
 from rest_framework.authtoken.models import Token
 from .models import User
+from django.contrib.auth import authenticate
 
 class SendOTP(APIView):
     def post(self,request,*args,**kwargs):
@@ -35,6 +36,7 @@ class VerifyOTP(APIView):
             user = User.objects.filter(email=email).first()
             if user is None:
                 user = User.objects.create_public_user(email=email)
+            user.is_active = True
             #create or get authentication token for user(for starting practice I have used django Token)
             token,created = Token.objects.get_or_create(user=user)
             return Response({
@@ -49,4 +51,22 @@ class VerifyOTP(APIView):
     
 otp_verify = VerifyOTP.as_view()
 
+class MemberLogin(APIView):
+    def post(self,request,*args,**kwargs):
+        serializer = EmailPasswordLoginSerializer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get('email')
+        password = serializer.validated_data.get('password')
+        user = authenticate(request,email=email,password=password)
+        if user is None:
+            return Response({'message':'wrong Credentials'},status=400)
+        
+        token,created = Token.objects.get_or_create(user=user)
+        return Response({
+            'message':'You are login Successfully',
+            'token':token.key
+        })
+
+member_login = MemberLogin.as_view()
 

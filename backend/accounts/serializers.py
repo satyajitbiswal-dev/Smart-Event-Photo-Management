@@ -1,10 +1,33 @@
 from rest_framework import serializers
 from .models import User
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'name',
+            'email',
+            'enrollment',
+            'bio',
+            'department',
+            'batch',
+            'profile_pic'
+        ]
+
+class PublicUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        models = User
+        fields = [
+            'username',
+            'name',
+            'email',
+            'profile_pic'
+        ]
 class PublicLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-class UserSerializer(serializers.ModelSerializer):
+class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields=[
@@ -18,3 +41,7 @@ class EmailRoleSerializer(serializers.ModelSerializer):
         fields = [
             'existing_mail','role'
         ]
+
+class EmailPasswordLoginSerializer(serializers.Serializer):
+   email = serializers.EmailField()
+   password = serializers.CharField()
