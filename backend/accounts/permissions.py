@@ -52,7 +52,7 @@ class IsEventPhotoGrapher(BasePermission):
      def has_object_permission(self, request, view, obj):
           if request.user.role == "A":
                return True
-          return obj.event_photographer == request.user or obj.event_coordinator == request.user 
+          return obj.event.event_photographer == request.user or obj.event.event_coordinator == request.user 
 
 GLOBAL_ROLE = {
     "P":{

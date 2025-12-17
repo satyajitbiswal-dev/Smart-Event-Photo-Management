@@ -1,0 +1,1 @@
+Pentax_K10D
