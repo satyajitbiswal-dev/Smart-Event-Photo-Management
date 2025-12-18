@@ -74,7 +74,7 @@ from django.core.files.base import ContentFile
 import os
 
 @shared_task
-def generate_thumbnail(photo_id):
+def generate_thumbnail(photo_id): #PNG ka nhi bana rha hai
     photo = Photo.objects.filter(photo_id=photo_id).first() #get the photo object
     # create thumbnail
     img = Image.open(photo.photo)
@@ -146,3 +146,20 @@ def add_watermark(photo_id, watermark_text):
         content=ContentFile(watermarked_io.getvalue()),
         save=True
     )
+
+
+from .predict import get_predictions
+from .models import Tag
+
+@shared_task
+def generate_tag(photo_id):
+    photo = Photo.objects.filter(photo_id=photo_id).first()
+    prediction_list = get_predictions(photo.photo.path)
+    tags = []
+    for prediction in prediction_list:
+        if prediction["confidence"] >= 0.25:
+            tag_instance = Tag.objects.get_or_create(tag_name=prediction["label"])[0]
+            tags.append(tag_instance)
+    photo.tag.set(tags)
+    print(prediction_list)
+

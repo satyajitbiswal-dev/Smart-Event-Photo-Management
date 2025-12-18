@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'accounts',
     'apps.event',
     'apps.photo',
+    'apps.engagements',
     'celery'
 ]
 
@@ -161,4 +162,3 @@ CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'/media')
-print(MEDIA_ROOT)

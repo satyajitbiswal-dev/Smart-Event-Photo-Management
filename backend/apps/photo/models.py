@@ -5,6 +5,10 @@ import uuid
 from apps.event.models import Event
 from accounts.models import User
 # Create your models here.
+
+class Tag(models.Model):
+    tag_name = models.CharField(max_length=50, unique=True)
+
 class Photo(models.Model):
     photo_id = models.UUIDField(default=uuid.uuid4, primary_key=True,editable=False)
     photo = models.ImageField(upload_to="photos/")
@@ -24,6 +28,7 @@ class Photo(models.Model):
     
     event = models.ForeignKey(Event,on_delete=models.CASCADE,related_name="photos")
     tagged_user = models.ManyToManyField(User,null=True,blank=True,related_name="tagged_In")
+    tag = models.ManyToManyField(Tag,blank=True,related_name="related_photos")
 
     class Meta:
         ordering = [

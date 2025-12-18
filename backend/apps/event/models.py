@@ -11,7 +11,7 @@ class Event(models.Model):
     qr_code = models.ImageField(null=True,blank=True)
     event_coordinator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="coordinated_events")
     event_photographer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events_as_photographer")
-    event_members = models.ManyToManyField(User,related_name="participated_events",null=True,blank=True)
+    event_members = models.ManyToManyField(User,related_name="participated_events",blank=True)
     slug = models.SlugField(unique=True)
 
     def __str__(self):

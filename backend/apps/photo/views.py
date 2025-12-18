@@ -1,33 +1,27 @@
 from django.shortcuts import render
 from rest_framework import generics,parsers
 from .models import Photo
-from .serializers import PhotoBulkUploadSerializer,PhotoDestroySerializer, PhotoUserTagSerializer, PhotoBulkUpdateSerialier
+from .serializers import PhotoBulkUploadSerializer,PhotoDestroySerializer, PhotoBulkUpdateSerialier
 from accounts.permissions import IsEventPhotoGrapher
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import json
-from .tasks import extract_exif,generate_thumbnail,add_watermark
+from .tasks import extract_exif,generate_thumbnail,add_watermark,generate_tag
 # Create your views here.
 class PhotoUploadView(generics.CreateAPIView):
-    # serializer_class = PhotoBulkUploadSerializer
+    serializer_class = PhotoBulkUploadSerializer
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
-    def get_serializer_class(self):
-        photos = self.request.FILES.getlist('uploaded_photos')
-        print(len(photos))
-        if len(photos) == 1:
-            return PhotoUserTagSerializer
-        return PhotoBulkUploadSerializer
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)  #data pakad kar serializer mai daalo
-        serializer.is_valid(raise_exception=True) #check all validation(field,level,model,queryset)
-        photos = serializer.save() #jo serializer mai create hai usko call karo bas
-        if isinstance(photos,Photo): #check for single object
-            photos=[photos]
+        serializer = self.get_serializer(data=request.data)  
+        serializer.is_valid(raise_exception=True) 
+        print(serializer.validated_data)
+        photos = serializer.save() 
         for photo in photos:
             extract_exif.delay(photo.photo_id)
             generate_thumbnail.delay(photo.photo_id)
             add_watermark.delay(photo.photo_id,photo.event.event_name)
+            generate_tag.delay(photo.photo_id)
         return Response({
             "message": "Photos are created successfully",
         })
