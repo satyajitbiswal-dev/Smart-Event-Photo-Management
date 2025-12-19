@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-# from event.models import Event
 import uuid
 from apps.event.models import Event
 from accounts.models import User
@@ -30,10 +29,24 @@ class Photo(models.Model):
     tagged_user = models.ManyToManyField(User,null=True,blank=True,related_name="tagged_In")
     tag = models.ManyToManyField(Tag,blank=True,related_name="related_photos")
 
+    liked_users = models.ManyToManyField(User,related_name='liked_photos',through='Like',blank=True)
     class Meta:
         ordering = [
             "-taken_at",
             "-upload_time_stamp"
         ]
 
+class Like(models.Model):
+    like_id = models.UUIDField(default=uuid.uuid4,primary_key=True,editable=False)
+    photo = models.ForeignKey(Photo,on_delete=models.CASCADE)
+    user  = models.ForeignKey(User,on_delete=models.CASCADE)
+    like_time_stamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "photo"],
+                name="unique_user_photo_like"
+            )
+        ]
 

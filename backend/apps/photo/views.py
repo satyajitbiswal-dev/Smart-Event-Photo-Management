@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics,parsers
-from .models import Photo
-from .serializers import PhotoBulkUploadSerializer,PhotoDestroySerializer, PhotoBulkUpdateSerialier
+from .models import Photo, Tag
+from .serializers import PhotoBulkUploadSerializer,PhotoDestroySerializer, PhotoBulkUpdateSerialier, PhotoSerializer
 from accounts.permissions import IsEventPhotoGrapher
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
@@ -45,34 +45,58 @@ class PhotoBulkDeleteView(APIView):
 
 delete_photos = PhotoBulkDeleteView.as_view()
 
+#correct handles now will create get for all attribute later
 class BulkPhotoUpdate(generics.GenericAPIView):
     queryset = Photo.objects.all()
     serializer_class = PhotoBulkUpdateSerialier
     def patch(self,request,*args,**kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
+        # print(serializer.validated_data)
         photo_ids =  serializer.validated_data.get("photo_ids")
         tagged_users = serializer.validated_data.get("tagged_users",None) 
         event = serializer.validated_data.get("event",None) 
         is_private = serializer.validated_data.get("is_private",None)
+        tags = serializer.validated_data.get("tags",None)
         photos = Photo.objects.filter(photo_id__in=photo_ids)
-        # for photo in photos: #N+1 Query btw
-        #     if event is not None : photo.event = event
-        #     if is_private is not None: photo.is_private = is_private
-        #     photo.save()
-        #     if tagged_users is not None: photo.tagged_user.set(tagged_users)
         updated_data={}
         if event is not None: updated_data["event"] = event
         if is_private is not None: updated_data["is_private"] = is_private
         if updated_data:
             photos.update(**updated_data)
-        if tagged_users is not None:
-            for photo in photos:
-                photo.tagged_user.set(tagged_users)
+        updated_tags = []
+        for tag in tags:
+            tag_instance = Tag.objects.get_or_create(tag)[0]
+            updated_tags.append(tag_instance)
+        for photo in photos:
+            if tagged_users is not None: photo.tagged_user.set(tagged_users)
+            if updated_tags is not []: photo.tag.set(updated_tags)
         return Response({
-            "message":"Done"
+            "message":"Photos are updated successfully"
         })
 
 update_view = BulkPhotoUpdate.as_view()
-        
+
+
+
+#is_private == true :- Only can be seen by Members
+#is_private == False :- main Image can be seen by members and watermarked_image can be seen by public
+#additional field (like count)
+class PhotoRetrieveView(generics.RetrieveAPIView):
+    queryset = Photo.objects.all()
+    lookup_field = 'photo_id'
+    serializer_class = PhotoSerializer
+    # def get_object(self):
+    #     obj = get_object_or_404(Photo.objects.all(), **filter_kwargs)
+    #     self.check_object_permissions(self.request, obj)
+    #     return obj
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance)
+    #     return Response(serializer.data)
+    
+
+photo_retreive_view = PhotoRetrieveView.as_view()
+
+
+#PhotoGraphic Dashboard (Total likes , Total Downloads,)

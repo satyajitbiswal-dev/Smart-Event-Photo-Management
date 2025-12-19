@@ -53,8 +53,8 @@ class PhotoBulkUploadSerializer(serializers.ModelSerializer):
             tag_instance = Tag.objects.get_or_create(tag_name=tag)[0]
             created_tags.append(tag_instance)
         for photo in created_photos:
-            if created_tags != [] :   photo.tag.set(created_tags)
-            if tagged_users != [] :   photo.tagged_user.set(tagged_users)
+            if created_tags != [] :   photo.tag.add(*created_tags)
+            if tagged_users != [] :   photo.tagged_user.add(*tagged_users)
 
         return created_photos
 
@@ -66,7 +66,10 @@ class PhotoBulkUpdateSerialier(serializers.Serializer):
     event = serializers.SlugRelatedField(slug_field='event_name',queryset=Event.objects.all(),required=False) #validation checked
     tagged_users = serializers.SlugRelatedField(slug_field='email',queryset=User.objects.all(),many=True,required=False) #validation checked
     is_private = serializers.BooleanField(required = False)
-    
+    tags = serializers.ListField(
+        child = serializers.CharField(max_length=50),
+        required = False
+    )
 
 class PhotoDestroySerializer(serializers.Serializer):
     photo_ids = serializers.ListField(
@@ -74,3 +77,11 @@ class PhotoDestroySerializer(serializers.Serializer):
         write_only = True
     )
 
+
+class PhotoSerializer(serializers.ModelSerializer):
+    tag = TagSerializer(read_only = True,many = True)
+    class Meta:
+        model = Photo
+        fields = [
+            
+        ]

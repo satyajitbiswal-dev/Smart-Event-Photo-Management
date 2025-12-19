@@ -160,6 +160,6 @@ def generate_tag(photo_id):
         if prediction["confidence"] >= 0.25:
             tag_instance = Tag.objects.get_or_create(tag_name=prediction["label"])[0]
             tags.append(tag_instance)
-    photo.tag.set(tags)
+    photo.tag.add(*tags)
     print(prediction_list)
 
