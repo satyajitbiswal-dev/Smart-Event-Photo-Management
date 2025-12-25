@@ -9,7 +9,6 @@ class Tag(models.Model):
     tag_name = models.CharField(max_length=50, unique=True)
     
 
-
 class Photo(models.Model):
     photo_id = models.UUIDField(default=uuid.uuid4, primary_key=True,editable=False)
     photo = models.ImageField(upload_to="photos/")

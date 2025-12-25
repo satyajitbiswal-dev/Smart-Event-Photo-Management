@@ -12,6 +12,8 @@ from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseBadRequest, FileResponse, HttpResponseNotFound
 from .filters import PhotoFilter, search
+from apps.notification.views import *
+
 # Create your views here.
 class PhotoUploadView(generics.CreateAPIView):
     serializer_class = PhotoBulkUploadSerializer
@@ -19,13 +21,23 @@ class PhotoUploadView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)  
         serializer.is_valid(raise_exception=True) 
-        print(serializer.validated_data)
         photos = serializer.save() 
+        #get event and tagged users 
+        event = serializer.validated_data['event']
+        tagged_users = serializer.validated_data.get("tagged_users",None)
+        photo_tagged_users_dict = {}
         for photo in photos:
             extract_exif.delay(photo.photo_id)
             generate_thumbnail.delay(photo.photo_id)
             add_watermark.delay(photo.photo_id,photo.event.event_name)
             generate_tag.delay(photo.photo_id)
+            if tagged_users is not None: photo_tagged_users_dict.update({photo:tagged_users})
+        
+        #send notifications
+        photoupload_notification(event=event,photos=photos)
+        if tagged_users is not None:
+            taguser_notification(photo_tagged_user_dict=photo_tagged_users_dict,event=event)
+
         return Response({
             "message": "Photos are created successfully",
         })
@@ -57,23 +69,37 @@ class BulkPhotoUpdate(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         photo_ids =  serializer.validated_data.get("photo_ids")
+        #get updated values
         tagged_users = serializer.validated_data.get("tagged_users",None) 
         event = serializer.validated_data.get("event",None) 
         is_private = serializer.validated_data.get("is_private",None)
         tags = serializer.validated_data.get("tags",None)
         photos = Photo.objects.filter(photo_id__in=photo_ids)
+        #set new data
         updated_data={}
         if event is not None: updated_data["event"] = event
         if is_private is not None: updated_data["is_private"] = is_private
         if updated_data:
             photos.update(**updated_data)
+        #set new tags
         updated_tags = []
-        for tag in tags:
-            tag_instance = Tag.objects.get_or_create(tag)[0]
-            updated_tags.append(tag_instance)
+        photo_tagged_user_dict={}
+        if tags is not None:
+                for tag in tags:
+                    tag_instance = Tag.objects.get_or_create(tag_name=tag)[0]
+                    updated_tags.append(tag_instance)
         for photo in photos:
-            if tagged_users is not None: photo.tagged_user.set(tagged_users)
-            if updated_tags is not []: photo.tag.set(updated_tags)
+            if tags is not None : photo.tag.set(updated_tags)
+            #get new tagged_users for each photo for sending notification
+            if tagged_users is not None:
+                old_tagged_users = photo.tagged_user.all()
+                new_tagged_users=set(tagged_users)-set(old_tagged_users)
+                photo_tagged_user_dict.update({photo : list(new_tagged_users)})
+                photo.tagged_user.set(tagged_users)
+
+        #send tag user notification
+        print("DICT:", photo_tagged_user_dict)
+        taguser_notification(photo_tagged_user_dict=photo_tagged_user_dict,event=event)
         return Response({
             "message":"Photos are updated successfully"
         })
@@ -141,8 +167,6 @@ download_view = DownloadAPIView.as_view()
 #protect the endpoint /media/photos/ (not to show public users)
 
 
+
 #PhotoGraphic Dashboard (Total likes , Total Downloads, uploaded photo in chrononical order)
 
-#Search and Filter API 
-#Search by Full text search and all its benefits
-#filter allowing (event__event_name etc and also date range filter)
