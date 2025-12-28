@@ -11,6 +11,8 @@ class Notification(models.Model):
     type = models.CharField(max_length=120, null=True, blank=True)
     photo = models.ForeignKey(Photo, blank=True, null=True, on_delete=models.CASCADE)
     comment = models.ForeignKey(Comment,blank=True,null=True,on_delete=models.CASCADE)
+    event = models.ForeignKey(Event,blank=True,null=True,on_delete=models.CASCADE)
+    # type_id = models.UUIDField()
 
     def __str__(self):
          return f"Notification for {self.user.username}: {self.text_message}"

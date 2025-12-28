@@ -1,10 +1,10 @@
 from django.urls import path
-from . import admin,eventcoordinator,views
+from .views import *
 
 urlpatterns = [
-    path('create/' , views.event_create_view),
-    path('<slug:slug>/update/' , views.event_details_update),
-    path('<slug:slug>/about/' , views.event_details_view),
-    path('<slug:slug>/delete/' , views.event_delete_view),
-    path('' , views.event_list_view),
+    path('create/' ,event_create_view),
+    path('<uuid:id>/update/' ,event_details_update),
+    path('<uuid:id>/' ,event_details_view, name = "event-details"),
+    path('<uuid:id>/delete/' ,event_delete_view),
+    path('' ,event_list_view),
 ]

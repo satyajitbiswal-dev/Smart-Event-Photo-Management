@@ -12,7 +12,7 @@ from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseBadRequest, FileResponse
 from .filters import *
-from apps.notification.views import *
+from apps.notification.notification import *
 
 # Create your views here.
 class PhotoUploadView(generics.CreateAPIView):
@@ -98,7 +98,6 @@ class BulkPhotoUpdate(generics.GenericAPIView):
                 photo.tagged_user.set(tagged_users)
 
         #send tag user notification
-        print("DICT:", photo_tagged_user_dict)
         taguser_notification(photo_tagged_user_dict=photo_tagged_user_dict,event=event)
         return Response({
             "message":"Photos are updated successfully"
@@ -165,9 +164,4 @@ class DownloadAPIView(APIView):
        
 download_view = DownloadAPIView.as_view()
 
-#protect the endpoint /media/photos/ (not to show public users)
-
-
-
-#PhotoGraphic Dashboard (Total likes , Total Downloads, uploaded photo in chrononical order)
 

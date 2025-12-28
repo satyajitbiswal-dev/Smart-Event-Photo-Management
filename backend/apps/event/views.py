@@ -23,13 +23,13 @@ class EventDeleteView(generics.DestroyAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes =[IsAdminUser]
-    lookup_field = 'slug'
+    lookup_field = 'id'
 
 event_delete_view = EventDeleteView.as_view()
 class EventDetailsView(generics.RetrieveAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    lookup_field = 'slug'
+    lookup_field = 'id'
 
 event_details_view = EventDetailsView.as_view()
 
@@ -41,10 +41,10 @@ event_list_view = EventListView.as_view()
 class EventDetailsUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    lookup_field = 'slug'
+    lookup_field = 'id'
     permission_classes = [IsEventCoordinator]
     def get_object(self):
-        obj = get_object_or_404(self.get_queryset(), slug=self.kwargs["slug"])
+        obj = get_object_or_404(self.get_queryset(), id=self.kwargs["id"])
         self.check_object_permissions(self.request, obj)
         return obj
 

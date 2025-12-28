@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'accounts',
-    'apps.event',
+    'apps.event.apps.EventConfig',
     'apps.photo.apps.PhotoConfig',
     'apps.engagements',
     'apps.notification',
@@ -144,7 +144,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-
+BASE_URL = "http://127.0.0.1:8000"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'

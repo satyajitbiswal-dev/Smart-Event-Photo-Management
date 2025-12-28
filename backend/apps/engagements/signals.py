@@ -1,7 +1,7 @@
 from apps.photo.models import *
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
-from apps.notification.views import *
+from apps.notification.notification import *
 # Create your Signals here.
 
 # (){'signal': <django.db.models.signals.ModelSignal object at 0x000002C9011D2F10>, 'sender': <class 'apps.photo.models.Like'>, 'action': 'pre_add', 'instance': <Photo: Photo object (fd2e11c1-79ca-4120-b7a4-3951361ab156)>, 'reverse': False, 'model': <class 'accounts.models.User'>, 'pk_set': {13}, 'using': 'default'}

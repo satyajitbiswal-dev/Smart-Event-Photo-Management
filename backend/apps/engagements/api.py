@@ -121,7 +121,3 @@ class CommentRemove(APIView):
 
 remove_comment = CommentRemove.as_view()
 
-
-# parent_comment = serializer.validated_data.get("parent_comment")
-        # body = serializer.validated_data.get("body")
-        # Comment.objects.create(user=user,photo=photo,parent_comment=parent_comment,body=body)

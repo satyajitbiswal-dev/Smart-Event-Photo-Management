@@ -1,7 +1,5 @@
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
-from django.http import HttpResponse
-from apps.event.models import Event
 import json
 
 class Notification(WebsocketConsumer):

@@ -2,6 +2,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.utils import timezone
 from .models import Notification
+from accounts.models import User
 
 #Add Notification creation or updation to all
 def photoupload_notification(event,photos):
@@ -66,7 +67,6 @@ def like_broadcast(photo):
         }
     )
 
-
 def liked_users_db(photo):
     photographer = photo.event.event_photographer
     like_count = photo.liked_users.count()
@@ -90,7 +90,6 @@ def liked_users_db(photo):
     
     return message
 
-
 def like_notif_to_photographer(photo,message):
     channel_layer = get_channel_layer()
     photographer = photo.event.event_photographer
@@ -104,8 +103,6 @@ def like_notif_to_photographer(photo,message):
                  }
         }
     )
-
-
 
 def comment_broadcast(comment,parent_comment):
     if parent_comment is not None: parent_comment_id = str(parent_comment.id)
@@ -158,4 +155,26 @@ def send_comment_notification(comment,parent_commentator,message):
     )
 
 
+def event_notification(event,pk_set,message):
+    channel_layer = get_channel_layer()
+    message = f"You are added to event {event.event_name}-{event.event_date.year}"
 
+    for pk in pk_set:
+        user = User.objects.filter(pk=pk).first()
+        if event.event_coordinator_id is pk:
+            message = f"You are added to event {event.event_name}-{event.event_date.year}.You are assigned as a coordinator for this event."
+        if event.event_photographer_id is pk:
+            message = f"You are added to event {event.event_name}-{event.event_date.year}.You are assigned as a photographer for this event."
+        Notification.objects.create(user = user, type="event_notif",text_message=message ,event=event)
+
+        async_to_sync(channel_layer.group_send)(
+            f"notify_user_{pk}",{
+                "type": "send_notification",
+                    "value":{
+                        "event_id" : str(event.id),
+                        "message": message
+                }
+            }
+        )
+    
+    #speacial notification to photographer and event-coordinator 
