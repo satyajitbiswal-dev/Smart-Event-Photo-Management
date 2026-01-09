@@ -4,7 +4,7 @@ from .models import User
 from rest_framework.views import APIView
 from .utils import send_password,passwordgenerator
 from django.conf import settings
-from .serializers import UserCreateSerializer,EmailRoleSerializer, PublicLoginSerializer
+from .serializers import *
 from rest_framework.response import Response
 from rest_framework import status
 from .permissions import GLOBAL_ROLE
@@ -35,40 +35,40 @@ class AddUser(APIView):
         
 add_user = AddUser.as_view()
 
-class GetUserRole(APIView):
-    def post(self,request,*args,**kwargs):
-        serializer = PublicLoginSerializer(data = request.data)
-        serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data.get('email')
-        user = User.objects.filter(email=email).first()
-        if user is None:
-            return Response({'message':'No User Exists'})
-        return Response({'messaage':f'The role of user is {user.role}'})
+# class GetUserRole(APIView):
+#     def post(self,request,*args,**kwargs):
+#         serializer = PublicLoginSerializer(data = request.data)
+#         serializer.is_valid(raise_exception=True)
+#         email = serializer.validated_data.get('email')
+#         user = User.objects.filter(email=email).first()
+#         if user is None:
+#             return Response({'message':'No User Exists'})
+#         return Response({'messaage':f'The role of user is {user.role}'})
 
-get_user_role = GetUserRole.as_view()
+# get_user_role = GetUserRole.as_view()
 
-class UpdateUserRole(APIView):
-    def post(self,request,*args,**kwargs):
-        serializer = EmailRoleSerializer(data = request.data)
-        serializer.is_valid(raise_exception=True)
+# class UpdateUserRole(APIView):
+#     def post(self,request,*args,**kwargs):
+#         serializer = EmailRoleSerializer(data = request.data)
+#         serializer.is_valid(raise_exception=True)
 
-        email = serializer.validated_data.get('existing_mail')
-        new_role = serializer.validated_data.get('role')
-        #get user
-        user = User.objects.filter(email=email).first()
-        if user is None:
-            return Response({"message":"User does not exist"})
+#         email = serializer.validated_data.get('existing_mail')
+#         new_role = serializer.validated_data.get('role')
+#         #get user
+#         user = User.objects.filter(email=email).first()
+#         if user is None:
+#             return Response({"message":"User does not exist"})
         
-        #Change diff roles
-        user.role = new_role
-        if new_role == 'M' or new_role == 'A':
-            password = passwordgenerator()
-            user.set_password(password)
-            send_password(email,password)
-        else:
-            user.set_unusable_password()
+#         #Change diff roles
+#         user.role = new_role
+#         if new_role == 'M' or new_role == 'A':
+#             password = passwordgenerator()
+#             user.set_password(password)
+#             send_password(email,password)
+#         else:
+#             user.set_unusable_password()
 
-        user.save()
-        return Response({'message':'User role updated successfully'})
+#         user.save()
+#         return Response({'message':'User role updated successfully'})
 
-update_user_role = UpdateUserRole.as_view()
+# update_user_role = UpdateUserRole.as_view()

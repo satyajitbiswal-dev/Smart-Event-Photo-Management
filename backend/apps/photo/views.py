@@ -132,7 +132,7 @@ class PhotoListView(generics.ListAPIView):
             queryset = queryset.filter(event__event_name = event_name)
         if q:
             queryset = search(q,queryset)
-        if self.request.user.role == 'P':
+        if self.request.user.is_anonymous or self.request.user.role == 'P':
             queryset = queryset.filter(is_private=False)
         return queryset
 

@@ -1,0 +1,14 @@
+<html>
+  <body>
+    <h3>New user request</h3>
+    <div>The user email is {{ user_email }} and user name is {{ user_name }}</div>
+    <a href="{{ approve_url }}" 
+       style="padding:10px;background:rgb(43, 213, 43);color:white;border-radius: 5px;cursor: pointer;">
+       ✅ Accept
+    </a> or
+    <a href="{{ reject_url }}" 
+       style="padding:10px;background:red;color:white;border-radius: 5px;cursor: pointer;">
+       ❌ Reject
+    </a>
+  </body>
+</html>

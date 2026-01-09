@@ -7,7 +7,8 @@ class IsMemberUser(BasePermission):
           return bool(
                request.user
                and request.user.is_authenticated
-               and request.user.role == "M"
+               and request.user.status == 'A'
+               and ( request.user.role == "M" or request.user.role == 'A')
           )
 
 class IsAdminUser(BasePermission):
@@ -16,6 +17,7 @@ class IsAdminUser(BasePermission):
           return bool(
                request.user
                and request.user.is_authenticated
+               and request.user.status == "A"
                and request.user.role == "A"
           )
 
@@ -24,7 +26,6 @@ class IsPublicUser(BasePermission):
      def has_permission(self,request,view):
           return bool(
                request.user
-               and request.user.is_authenticated
                and request.user.role == "P"
           )         
 
@@ -34,6 +35,7 @@ class IsEventCoordinator(BasePermission):
           return bool(
                request.user
                and request.user.is_authenticated
+               and request.user.status == 'A'
                and request.user.role != "P" 
           )
      def has_object_permission(self, request, view, obj):
@@ -47,6 +49,7 @@ class IsEventPhotoGrapher(BasePermission):
           base_permission = bool(
                request.user
                and request.user.is_authenticated
+               and request.user.status == 'A'
                and request.user.role != "P" 
           )
 

@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from .manager import CustomUserManager
+import uuid
+from django.utils import timezone
 
 # Create your models here.
 class User(AbstractUser):
@@ -10,6 +12,12 @@ class User(AbstractUser):
         PUBLIC = 'P',_('Public')
         MEMBER = 'M',_('IMG_Member')
         ADMIN  = 'A',_('Admin')
+
+    class UserJoin(models.TextChoices):
+        ACCEPTED = 'A', _('Accepted')
+        REJECTED = 'R', _('Rejected')
+        PENDING = 'P', _('Pending')
+
 
     #For every User whether Public or Member
     email = models.EmailField(_('email address'),unique=True,blank=False)
@@ -25,15 +33,29 @@ class User(AbstractUser):
     enrollment = models.CharField(max_length=8,blank=True,null=True)
     department = models.CharField(max_length=50,blank=True,null=True)
     bio = models.TextField(max_length=300,null=True,blank=True)
-    profile_pic = models.ImageField(null=True,blank=True)
+    # profile_pic = models.ImageField(null=True,blank=True)
+    profile_pic = models.ImageField(upload_to='profiles/', null=True,blank=True, default="profiles/default.png")
     batch = models.CharField(max_length=50,null=True,blank=True)  
+    status =  models.CharField(
+        max_length=1,
+        choices=UserJoin.choices,
+        default=UserJoin.PENDING
+    )
 
     is_active = models.BooleanField(default=True) 
     is_staff = models.BooleanField(default=False)  
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username"]
+    REQUIRED_FIELDS = ["username","name"]
 
     objects = CustomUserManager()
 
     
+class Token(models.Model):
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+
+    def is_valid(self):
+        return (not self.is_used) and self.expires_at > timezone.now()

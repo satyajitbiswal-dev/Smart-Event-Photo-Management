@@ -4,24 +4,17 @@ from .utils import generate_unique_username
 
 
 class CustomUserManager(UserManager):
-    def create_user(self,email, username = None, password = None ,role='P', **extra_fields):
+    def create_user(self,email, username, password,name=None,**extra_fields):
         if not email:
             raise ValueError(_('You must provide an email in order to Login'))
         email = self.normalize_email(email)
-
-        if username is None:
-            base_username = email.split("@")[0]
-            username = generate_unique_username(base_username)
 
         extra_fields.setdefault('is_staff',False)
         extra_fields.setdefault('is_superuser',False)
         extra_fields.setdefault('is_active',True)
 
-        user = self.model(email=email,username=username,role=role, **extra_fields)
-        if password is None:
-            user.set_unusable_password()   
-        else:
-            user.set_password(password)
+        user = self.model(email=email, username=username, name=name, status='P', **extra_fields)
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -41,12 +34,9 @@ class CustomUserManager(UserManager):
         extra_fields.setdefault('is_staff',False)
         extra_fields.setdefault('is_superuser',False)
         extra_fields.setdefault('is_active',True)
-        user = self.model(email=email,
-                          name = name,
-                          username=username,
-                          enrollment=enrollment ,
-                          department = department,
-                          role = role,
+        user = self.model(email=email,name = name,
+                          username=username,enrollment=enrollment ,
+                          department = department,role = role,
                           **extra_fields)
         
         if role == ('M' or 'A') and password is not None:
@@ -75,22 +65,7 @@ class CustomUserManager(UserManager):
         return user
 
 
- #Public Only
-    # def create_public_user(self,email,username=None,**extra_fields):
-    #     if not email:
-    #         raise ValueError(_('You must provide an email in order to Login'))
-        
-    #     email = self.normalize_email(email)
+    '''
+    Admin decides role(Admin or Member) and admin decides pending , active , rejected
 
-    #     if username is None:
-    #         base_username = email.split("@")[0]
-    #         username = self.generate_unique_username(base_username)
-        
-    #     extra_fields.setdefault('is_staff',False)
-    #     extra_fields.setdefault('is_superuser',False)
-    #     extra_fields.setdefault('is_active',True)
-    #     user = self.model(email=email,username=username,role = 'P',**extra_fields)
-        
-    #     user.set_unusable_password()   
-    #     user.save(using=self._db)
-    #     return user
+    '''

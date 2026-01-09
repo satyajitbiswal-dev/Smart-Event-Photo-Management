@@ -25,8 +25,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
             'email',
             'profile_pic'
         ]
-class PublicLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+
 
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,6 +42,17 @@ class EmailRoleSerializer(serializers.ModelSerializer):
             'existing_mail','role'
         ]
 
-class EmailPasswordLoginSerializer(serializers.Serializer):
-   email = serializers.EmailField()
-   password = serializers.CharField()
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(min_length=8, write_only=True)
+    class Meta:
+        model = User
+        fields = ['email','username','name','password']
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+    
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length=8, write_only=True)
+    
+    

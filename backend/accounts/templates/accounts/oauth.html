@@ -1,0 +1,35 @@
+<!-- /oauth/authorise/?client_id=MY_CLIENT_ID
+  <&redirect_uri=REDIRECT_URI>
+  <&state=RANDOM_STATE_STRING> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OAuth Test</title>
+</head>
+<body>
+
+  <h2>OAuth Test</h2>
+
+  <button onclick="loginWithGoogle()">Login with Channeli</button>
+
+  <script>
+    const CLIENT_ID = " {{ client_id }} " ;
+    const REDIRECT_URI = " {{ redirect_uri }} ";
+    const state_str = "sasuke" 
+
+    function loginWithGoogle() {
+      const base = "https://channeli.in/oauth/authorise/";
+
+      const url =
+        base +
+        "?client_id=" + CLIENT_ID +
+        "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
+        "&state="+ state_str ;
+
+      window.location.href = url;
+    }
+  </script>
+
+</body>
+</html>
