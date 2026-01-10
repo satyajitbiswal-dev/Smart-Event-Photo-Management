@@ -17,7 +17,9 @@ class User(AbstractUser):
         ACCEPTED = 'A', _('Accepted')
         REJECTED = 'R', _('Rejected')
         PENDING = 'P', _('Pending')
-
+    class Sex(models.TextChoices):
+        MALE = 'M', _('Male')
+        FEMALE = 'F', _('Female')
 
     #For every User whether Public or Member
     email = models.EmailField(_('email address'),unique=True,blank=False)
@@ -41,7 +43,12 @@ class User(AbstractUser):
         choices=UserJoin.choices,
         default=UserJoin.PENDING
     )
-
+    sex = models.CharField(
+        max_length=1,
+        choices=Sex.choices,
+        null=True, blank=True
+    )
+    dob = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True) 
     is_staff = models.BooleanField(default=False)  
 

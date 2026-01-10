@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from rest_framework import permissions,generics,mixins
 from rest_framework.authentication import TokenAuthentication
 from .models import Event
-from .serializers import EventSerializer
+from .serializers import *
 from django.shortcuts import get_object_or_404
 from accounts.permissions import IsEventCoordinator,IsAdminUser
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
@@ -51,3 +53,20 @@ class EventDetailsUpdateView(generics.RetrieveUpdateAPIView):
 event_details_update = EventDetailsUpdateView.as_view()
 
 
+class UserEventActivity(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        print(user)
+        coordinated_events = Event.objects.filter(event_coordinator = user)
+        photographed_events = Event.objects.filter(event_photographer = user)
+        participated_events = user.participated_events.all()
+
+        # serializer = EventSerializer()
+        # serializer.is_valid(raise_exception=True)
+
+        return Response({
+            "coordinated_events":EventSerializer(coordinated_events,many=True).data,
+            "photographed_events":EventSerializer(photographed_events,many=True).data,
+            "participated_events":EventSerializer(participated_events,many=True).data
+        })

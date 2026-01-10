@@ -60,3 +60,11 @@ class EventSerializer(serializers.ModelSerializer):
         return instance
 
         
+class EventActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = [
+            'event_coordinator',
+            'event_photographer',
+            'event_members'
+        ]

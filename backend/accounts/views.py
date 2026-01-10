@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions,generics,authentication
-from rest_framework import status
+from rest_framework import permissions,generics,authentication , parsers
 from .models import User
 from .serializers import *
 from rest_framework.exceptions import PermissionDenied
@@ -11,6 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import *
 from .tasks import *
+
 # Create your views here.
 class HomeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -53,7 +53,7 @@ class UserProfileUpdateView(generics.RetrieveUpdateAPIView):
     lookup_field = 'username'
     def get_serializer_class(self, *args, **kwargs):
         if self.request.user.role == 'P':
-            return PublicUserSerializer
+            return UserUpdateSerializer
         return UserSerializer
     
     def get_object(self):
@@ -61,6 +61,19 @@ class UserProfileUpdateView(generics.RetrieveUpdateAPIView):
         if obj != self.request.user:
            raise PermissionDenied("You cannot view other user's profile")
         return obj
+
+class ProfilePicUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    lookup_field = 'username'
+    serializer_class = ProfilePicUpdateSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    def get_object(self):
+        obj = super().get_object()
+        if obj != self.request.user:
+           raise PermissionDenied("You cannot view other user's profile")
+        return obj
+
 
 class ListMembers(generics.ListAPIView):
     queryset = User.objects.exclude(role = 'P')

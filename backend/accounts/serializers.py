@@ -13,7 +13,32 @@ class UserSerializer(serializers.ModelSerializer):
             'department',
             'batch',
             'profile_pic',
-            'role'
+            'role',
+            'sex',
+            'dob'
+        ]
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'name',
+            'email',
+            'enrollment',
+            'bio',
+            'department',
+            'batch',
+            'role',
+            'sex',
+            'dob'
+        ]
+
+class ProfilePicUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'profile_pic'
         ]
 
 class PublicUserSerializer(serializers.ModelSerializer):

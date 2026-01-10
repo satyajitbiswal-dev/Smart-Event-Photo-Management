@@ -10,6 +10,9 @@ import Logout from "../features/auth/Logout";
 import Member from "../pages/Profile/Profile";
 import App from "../App";
 import PersistLogin from "../components/common/PersistLogin";
+import Admin from "../pages/Profile/Admin";
+import EventCoordinatorPanel from "../pages/Profile/EventCoordinatorPanel";
+import Photographer from "../pages/Profile/Photographer";
 
 
 export const router = createBrowserRouter(
@@ -52,6 +55,9 @@ export const router = createBrowserRouter(
             />
 
             <Route path="profile" element={<Member />} />
+            <Route path="admin" element={<Admin />} />
+            <Route path="event_coordinator/:event_id" element={<EventCoordinatorPanel />} />
+            <Route path="photographer/dashboard/:event_id" element={<Photographer />} />
           </Route>
         </Route>
 
