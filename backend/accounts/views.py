@@ -139,3 +139,15 @@ class MeAPIView(APIView):
             "username": user.username,
             "role": user.role
         })
+
+
+class ProfilePicView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    lookup_field= 'username'
+    serializer_class = ProfilePicUpdateSerializer
+    def get_object(self):
+        obj = super().get_object()
+        if obj != self.request.user:
+           raise PermissionDenied("You cannot view other user's profile")
+        return obj

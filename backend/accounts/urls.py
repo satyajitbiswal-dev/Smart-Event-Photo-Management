@@ -23,4 +23,5 @@ urlpatterns = [
     path("api/admin/approve", approve_user),
     path("api/admin/reject", reject_user),
     path('event_activity/' ,UserEventActivity.as_view()),
+    path('<str:username>/profile_pic/', ProfilePicView.as_view()),
 ]
