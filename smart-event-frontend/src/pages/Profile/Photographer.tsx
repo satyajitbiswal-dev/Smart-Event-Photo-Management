@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 const Photographer = () => {
   const { event_id } = useParams()
   return (
-    <div>Photographer -{ event_id}</div>
+    <div>Photographer -{ event_id }</div>
   )
 }
 

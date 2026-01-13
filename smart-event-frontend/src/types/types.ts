@@ -9,7 +9,7 @@ export interface Photo {
     eventId?: string;
 }
 
-export interface MemberProfileForm {
+export interface User {
     email: string;
     username: string;
     name: string;
@@ -22,7 +22,7 @@ export interface MemberProfileForm {
     sex?: string;
     dob?: string;
 }
-export type MemberProfile = Partial<MemberProfileForm>;
+export type MemberProfile = Partial<User>;
 
 export interface Event {
     id : string

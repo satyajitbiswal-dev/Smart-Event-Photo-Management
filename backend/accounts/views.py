@@ -10,6 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .models import *
 from .tasks import *
+from django.db.models import Q
 
 # Create your views here.
 class HomeView(APIView):
@@ -75,10 +76,7 @@ class ProfilePicUpdateView(generics.UpdateAPIView):
         return obj
 
 
-class ListMembers(generics.ListAPIView):
-    queryset = User.objects.exclude(role = 'P')
-    lookup_field = 'username'
-    serializer_class = UserSerializer
+
     
 
 

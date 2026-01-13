@@ -31,11 +31,11 @@ def verify_otp(email,otp):
         return True
     return False
 
-def send_password(email,password=None):
-    if password is None:
-        password = passwordgenerator()
-    subject="Your Password for Login into Smart-Event-Photo-Management App"
-    message=f"Your Password is {password}.If you want You can Change it later after joining."
-    from_email=settings.EMAIL_HOST_USER
-    send_mail(subject,message,from_email,[email])
+
                 
+def generate_username_from_email(email: str):
+    
+    base = email.split("@")[0]              # satyajit, john.doe
+    base = base.replace(".", "").lower()    # johndoe
+    number = random.randint(1000, 9999)     # 4 digit suffix
+    return f"{base}_{number}"

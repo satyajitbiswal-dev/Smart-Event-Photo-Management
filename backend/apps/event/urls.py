@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
 
+#event/ baseurl
 urlpatterns = [
     path('create/' ,event_create_view),
     path('<uuid:id>/update/' ,event_details_update),

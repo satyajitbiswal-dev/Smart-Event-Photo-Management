@@ -1,7 +1,7 @@
 from django.urls import path,include
 from .views import *
 from .userlogin import *
-from . import admin
+from .userapi import *
 from apps.event.views import UserEventActivity
 
 urlpatterns = [
@@ -17,9 +17,9 @@ urlpatterns = [
     path('login/send-otp/', login_otp_send),
     path('login/verify-otp/', otp_verify),
     path('logout/',logout_view),
-    path('admininterface/add_user/', admin.add_user),
-    # path('admininterface/update_user_role/', admin.update_user_role),
-    # path('admininterface/get_user_role/', admin.get_user_role),
+    path('admininterface/add_user/', add_user),
+    path("admininterface/remove-user/<str:username>/", RemoveUser.as_view()),
+    path('admininterface/update_user_role/<str:username>/', update_user_role),
     path("api/admin/approve", approve_user),
     path("api/admin/reject", reject_user),
     path('event_activity/' ,UserEventActivity.as_view()),

@@ -43,3 +43,12 @@ def user_join_notification(email,username):
     message = f'Dear {username},\n\nYour registration has been approved. Welcome aboard!\n\nBest Regards,\nSmart Event Team'
     from_email = settings.EMAIL_HOST_USER
     send_mail(subject, message, from_email, [email])
+
+@shared_task
+def send_password(email,password,username):
+    if password is None or username is None:
+        return 
+    subject="You are added to Smart-Event-Photo-Management App"
+    message=f"For Login your username is {username} and password is {password}.You can Change it later after joining.\nWelcome aboard!\n\nBest Regards,\nSmart Event Team"
+    from_email=settings.EMAIL_HOST_USER
+    send_mail(subject,message,from_email,[email])
