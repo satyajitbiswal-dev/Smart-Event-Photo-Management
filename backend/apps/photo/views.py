@@ -120,21 +120,37 @@ photo_retreive_view = PhotoRetrieveView.as_view()
 
 class PhotoListView(generics.ListAPIView):
     serializer_class = PhotoListSerializer
-    # filter_backends = [filters.SearchFilter]
-    # search_fields = ['event__event_name','event__event_photographer__name','tag__tag_name','tagged_user__username']
     filterset_class = PhotoFilter
 
     def get_queryset(self):
-        queryset = Photo.objects.all()
-        event_name = self.request.query_params.get("event")
-        q = self.request.query_params.get("q")
-        if event_name:
-            queryset = queryset.filter(event__event_name = event_name)
-        if q:
-            queryset = search(q,queryset)
-        if self.request.user.is_anonymous or self.request.user.role == 'P':
-            queryset = queryset.filter(is_private=False)
-        return queryset
+        qs = Photo.objects.all()
+        params = self.request.query_params
+        user = self.request.user
+
+        #  Context scoping
+        if params.get("event_id"):
+            qs = qs.filter(event=params.get("event_id"))
+
+        if params.get("favorites") == "true" and user.is_authenticated:
+            qs = qs.filter(is_favourite_of=user)
+
+        if params.get("tagged") == "true" and user.is_authenticated:
+            qs = qs.filter(tagged_user=user)
+
+        #  Filters (django-filter)
+        qs = PhotoFilter(self.request.GET, queryset=qs).qs
+
+        # Search
+        search_query = params.get("search")
+        if search_query:
+            qs = search(search_query, qs)
+
+        #  Privacy
+        if user.is_anonymous or user.role == 'P':
+            qs = qs.filter(is_private=False)
+
+        return qs
+
 
 photo_list_view = PhotoListView.as_view()
 

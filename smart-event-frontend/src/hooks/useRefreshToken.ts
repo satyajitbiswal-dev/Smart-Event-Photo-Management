@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setAccessToken, setUser } from "../app/authslice";
+import { setAccessToken, setUser, AppInit } from "../app/authslice";
 import type { AppUser } from "../app/authslice";
 
 const useRefreshToken = () => {
@@ -41,9 +41,14 @@ const useRefreshToken = () => {
         // If user fetch fails, we still have the token, so continue
       }
 
+      // Mark auth as initialized (stop loading state)
+      dispatch(AppInit());
+
       return accessToken;
     } catch (error) {
       console.error("Token refresh failed:", error);
+      // Even if refresh fails, stop loading so Protected can redirect properly
+      dispatch(AppInit());
       throw error;
     }
   };

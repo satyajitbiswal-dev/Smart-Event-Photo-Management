@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+# /photos ---> base url
+
 urlpatterns = [
     path('',views.photo_list_view),
     path('upload_photo/<uuid:id>/' , views.upload_photo_view),

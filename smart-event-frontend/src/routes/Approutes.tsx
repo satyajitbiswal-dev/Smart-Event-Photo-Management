@@ -13,8 +13,10 @@ import PersistLogin from "../components/common/PersistLogin";
 import Admin from "../pages/Profile/Admin";
 import EventCoordinatorPanel from "../pages/Profile/EventCoordinatorPanel";
 import Photographer from "../pages/Profile/Photographer";
-import PersonalGallery from "../components/photo/Gallery";
+import Gallery from "../components/photo/Gallery";
 import About from "../pages/About";
+import EventGallery from "../pages/Photo/EventGallery";
+import Event from "../pages/Event/Event";
 
 
 export const router = createBrowserRouter(
@@ -56,12 +58,41 @@ export const router = createBrowserRouter(
               }
             />
 
-            <Route path="profile" element={<Member />} />
-            <Route path="about" element={<About />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="event_coordinator/:event_id" element={<EventCoordinatorPanel />} />
-            <Route path="photographer/dashboard/:event_id" element={<Photographer />} />
-            <Route path="profile/personalgallery/" element={<PersonalGallery />} />
+            <Route path="profile" element={
+              <Protected authentication>
+                 <Member />
+                </Protected>
+            } />
+            <Route path="about" element={
+              <Protected authentication>
+                  <About />
+                </Protected>
+              } />
+            <Route path="admin" element={
+              <Protected authentication allowedRole={['A']} >
+                  <Admin />
+                </Protected>
+              } />
+            <Route path="event_coordinator/:event_id" element={
+              <Protected authentication>
+                  <EventCoordinatorPanel />
+                </Protected>
+              } />
+            <Route path="photographer/dashboard/:event_id" element={
+              <Protected authentication>
+                  <Photographer />
+                </Protected>
+              } />
+            <Route path="event/" element={
+              <Protected authentication >
+                  <Event />
+                </Protected>
+              } />
+              <Route path="event/:event_id/photos/" element={
+              <Protected authentication  >
+                  <EventGallery />
+                </Protected>
+              } />
           </Route>
         </Route>
 

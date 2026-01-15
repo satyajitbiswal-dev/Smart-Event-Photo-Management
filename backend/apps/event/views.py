@@ -52,7 +52,6 @@ class EventDetailsUpdateView(generics.RetrieveUpdateAPIView):
 
 event_details_update = EventDetailsUpdateView.as_view()
 
-
 class UserEventActivity(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
@@ -64,7 +63,6 @@ class UserEventActivity(APIView):
 
         # serializer = EventSerializer()
         # serializer.is_valid(raise_exception=True)
-
         return Response({
             "coordinated_events":EventSerializer(coordinated_events,many=True).data,
             "photographed_events":EventSerializer(photographed_events,many=True).data,

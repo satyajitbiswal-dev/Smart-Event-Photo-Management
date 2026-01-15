@@ -133,7 +133,7 @@ const Member = () => {
   }
   
   return (
-    <Box maxWidth={1100} mx="auto" mt={6} px={2}>
+    <Box maxWidth={1100} mx="auto" mt={6} px={2} >
       <Paper elevation={3} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
         <Grid container spacing={3} alignItems="center">
           <Grid size={{ xs: 12, md: 8 }}>
@@ -347,7 +347,7 @@ const Member = () => {
           />
         </Box>
         {/* Activities */}
-        {user.role === 'A' &&
+        {/* {user.role === 'A' &&
           <Box mt={3}>
             <Typography variant="h6" color="text.secondary" component={"span"}>
               Admin Panel:
@@ -357,7 +357,7 @@ const Member = () => {
               Go to Admin Panel
             </Button>
           </Box>
-        }
+        } */}
         <Stack mt={3} direction="row" alignItems={"center"} spacing={1}>
           <Typography variant="h6" color="text.secondary" component={"span"}>
             Coordinated Events :

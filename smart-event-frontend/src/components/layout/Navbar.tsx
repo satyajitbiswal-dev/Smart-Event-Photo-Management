@@ -1,15 +1,16 @@
 import React from 'react'
-import { AppBar, Avatar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography } from '@mui/material'
+import { AppBar, Avatar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useScrollTrigger } from '@mui/material'
 import AdbIcon from '@mui/icons-material/Adb';
 import MenuIcon from '@mui/icons-material/Menu';
 import Member from '../../pages/Profile/Profile';
 import Logout from '../../features/auth/Logout';
 import PersonalGallery from '../photo/Gallery';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout, setPersist } from '../../app/authslice';
 import { LogoutOutlined } from '@mui/icons-material';
 import ProfilePic from '../../features/auth/ProfilePic';
+import type { RootState } from '../../app/store';
 
 const pages = [{
   'name':'Home',
@@ -18,7 +19,12 @@ const pages = [{
 {
   'name':'About',
   'route':'/about'
-}];
+},
+{
+  'name':'Events',
+  'route':'/event'
+}
+];
 
 
 const Navbar = () => {
@@ -26,6 +32,7 @@ const Navbar = () => {
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
   const navigate = useNavigate()
+  const authUser = useSelector((state: RootState) => state.auth.user)
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -47,10 +54,13 @@ const Navbar = () => {
         dispatch(logout())
         dispatch(setPersist(false))
     }
-
+    const trigger = useScrollTrigger({
+      disableHysteresis: true,
+      threshold: 64, // pixels before shrink
+    });
   return (
-    <AppBar position="sticky" elevation={1}>
-      <Container maxWidth="xl">
+    <AppBar position="sticky" elevation={1} sx={{maxHeight:64}}>
+      <Container maxWidth="xl" >
         <Toolbar disableGutters>
           {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
           <Typography
@@ -163,6 +173,10 @@ const Navbar = () => {
                 navigate('/profile')}}>
                 Profile
               </MenuItem>
+             {authUser?.role === 'A' && <MenuItem key="Admin" onClick={()=>{handleCloseUserMenu();
+                navigate('/admin')}} >
+                Admin Panel
+              </MenuItem>}
               <MenuItem key={"Personal Gallery"} 
                 onClick={()=>{handleCloseUserMenu(); 
                 navigate('profile/personalgallery/')}}

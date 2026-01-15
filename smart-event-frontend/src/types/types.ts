@@ -7,6 +7,7 @@ export interface Photo {
     tags?: string[];
     uploadedAt?: string;
     eventId?: string;
+    photo?: string;
 }
 
 export interface User {
@@ -28,7 +29,7 @@ export interface Event {
     id : string
     event_coordinator : string
     event_photographer : string
-    event_members : string
+    event_members : string[]
     event_name : string
     description : string
     event_date : string

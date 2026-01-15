@@ -7,7 +7,7 @@ import RemoveEvent from '../../components/RBAC/Admin/RemoveEvent'
 
 const Admin = () => {
   return (
-    <Box sx={{ backgroundColor: '#f8fafc', py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }}>
+    <Box sx={{ backgroundColor: '#f8fafc', py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2 } }} >
       <Box mx={"auto"} sx={{ maxWidth: { xs: '100%', sm: 900, md: 1200 } }}>
         <Paper elevation={3} sx={{
           p: { xs: 2, md: 4 }, borderRadius: { xs: 2, md: 3 },
@@ -36,7 +36,7 @@ const Admin = () => {
             <Grid size={{ xs: 12, md: 6, sm: 6 }}>
               <Paper
                 elevation={3} sx={{
-                  p: { xs: 2, md: 4 }, borderRadius: { xs: 2, md: 3 },
+                  p: { xs: 2, md: 3 }, borderRadius: { xs: 2, md: 3 },
                   textAlign: "center",
                   background: "linear-gradient(135deg, #79dcfa, #e7e7f3)",
                 }}>
@@ -59,7 +59,7 @@ const Admin = () => {
             <Grid size={{ xs: 12, md: 6, sm: 6 }}>
               <Paper
                 elevation={3} sx={{
-                  p: { xs: 2, md: 4 }, borderRadius: { xs: 2, md: 3 },
+                  p: { xs: 2, md: 3 }, borderRadius: { xs: 2, md: 3 },
                   textAlign: "center",
                   background: "linear-gradient(135deg, #ff8e8e, #f1f5f9)",
                 }}>

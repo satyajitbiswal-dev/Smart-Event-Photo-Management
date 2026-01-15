@@ -12,7 +12,7 @@ const PhotoList = () => {
             try {
                 const response = await privateapi.get('photos/');
                 console.log('Fetched photo data:', response.data);
-                setPhotos(response.data.results);
+                setPhotos(response.data);
             } catch (error) {
                 console.error('Error fetching photo data:', error);
             }
@@ -28,7 +28,7 @@ const PhotoList = () => {
   return (
     <div>
         This is your Home page
-        {photos.map(photo=>(
+        {photos?.map(photo=>(
             <div key={photo.photo_id}>
                 <h3>{photo.photo_id}</h3>
                 <img src={photo.thumbnail} alt={photo.photo_id}/>
