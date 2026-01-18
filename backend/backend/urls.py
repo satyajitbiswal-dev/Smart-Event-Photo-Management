@@ -30,6 +30,7 @@ urlpatterns = [
     path('event/', include('apps.event.urls')),
     path('photos/', include('apps.photo.urls')),
     path('photo/', include('apps.engagements.urls')),
+    path('notification/', include('apps.notification.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

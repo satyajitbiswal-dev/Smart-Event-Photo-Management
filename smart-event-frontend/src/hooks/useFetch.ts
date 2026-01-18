@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import privateapi, { publicapi } from '../services/AxiosService'
+import  { useEffect, useState } from 'react'
+import privateapi from '../services/AxiosService'
 import type { Photo } from '../types/types'
 
 type FetchResult<T> = {
@@ -20,7 +20,6 @@ const useFetch = (url:string| null) => {
             const response = await privateapi.get(url, {
                 signal: controller.signal
             })
-            console.log(response.data);
             setData({
           results: response.data.results,
           next: response.data.next,

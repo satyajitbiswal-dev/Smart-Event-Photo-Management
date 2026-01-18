@@ -36,8 +36,6 @@ export const Protected = ({ children, authentication = true, allowedRole = ['P',
 
   // Allow access if authenticated, guest, or has access token (user data might still be loading)
   const allowed = isAuthenticated || isGuest || !!accessToken;
-  console.log("isAuthenticated",isAuthenticated);
-    console.log("isGuest",isGuest);
     
   if (authentication && !allowed) {
     return <Navigate to="/signin" replace />;

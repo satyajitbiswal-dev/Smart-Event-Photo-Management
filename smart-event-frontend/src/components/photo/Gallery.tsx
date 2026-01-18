@@ -18,7 +18,7 @@ const Gallery = ({ title, subtitle, mode, event }: props) => {
 
   const [search, setSearch] = useState<string | undefined>()
   const [filter, setFilter] = useState<string | undefined>()
-  const [layout, setLayout] = useState<string | undefined>()
+  const [layout, setLayout] = useState<'standard' | 'masonry'>('standard')
   return (
     <>
       <GalleryHeader title={title} subtitle={subtitle} event={event} />
@@ -31,7 +31,7 @@ const Gallery = ({ title, subtitle, mode, event }: props) => {
         {/* RIGHT CONTENT */}
         <Box sx={{ flex: 1 }}>
           <Suspense fallback = {<p>loading ....</p>}>
-          <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout ? layout : 'Grid'} mode={mode} />
+          <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout} mode={mode} />
           </Suspense>
         </Box>
       </Box>

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Avatar, Box, Button, ButtonGroup, FormControl, FormControlLabel, FormLabel, Grid, MenuItem, Paper, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import privateapi from '../../services/AxiosService';
 import type { MemberProfile, Event } from '../../types/types';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Member = () => {
   const [isEditable, setisEditable] = useState<boolean>(false)

@@ -1,8 +1,6 @@
 import {useEffect, useState} from 'react';
-import {privateapi, publicapi} from '../services/AxiosService.ts';
+import {privateapi} from '../services/AxiosService.ts';
 import type { Photo } from '../types/types.ts';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../app/store.ts';
 
 const PhotoList = () => {
     const[photos, setPhotos] = useState<Photo[]>([]);
@@ -18,11 +16,7 @@ const PhotoList = () => {
         }
         fetchPhoto();
     }, [])
-    const token = useSelector((state: RootState) => {
-        return state.auth.access_token;
-    });
 
- // errro in dv and p
   return (
     <div>
         This is your Home page

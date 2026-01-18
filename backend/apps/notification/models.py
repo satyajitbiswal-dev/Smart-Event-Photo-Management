@@ -16,3 +16,8 @@ class Notification(models.Model):
 
     def _str__(self):
          return f"Notification for {self.user.username}: {self.text_message}"
+    
+    class Meta:
+        ordering = [
+            "-send_time",
+        ]

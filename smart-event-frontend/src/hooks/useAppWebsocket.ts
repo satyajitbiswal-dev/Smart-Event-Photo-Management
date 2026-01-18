@@ -1,6 +1,8 @@
 import useWebSocket, { ReadyState } from "react-use-websocket"
 import { useEffect } from 'react';
 import { Slide, toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { addNotification } from "../app/notificationslice";
 
 export const useAppWebSocket = (token: string | null) => {
 
@@ -12,6 +14,7 @@ export const useAppWebSocket = (token: string | null) => {
       shouldReconnect: () => true,
     },
   )
+  const dispatch = useDispatch()
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage) {
@@ -27,16 +30,8 @@ export const useAppWebSocket = (token: string | null) => {
         theme: "light",
         transition: Slide,
       });
+      dispatch(addNotification(lastJsonMessage.value))
     }
-  }, [lastJsonMessage])
+  }, [lastJsonMessage,dispatch])
 
 }
-
-
-/* 
-
-first create fetch Notification for particular user , mark seen api in backend 
-
-
-
-*/

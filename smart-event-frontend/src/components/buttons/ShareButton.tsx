@@ -1,15 +1,13 @@
-import { Box, Button, IconButton, Menu, MenuItem, Typography } from '@mui/material'
+import { Box, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import type { Event } from '../../types/types'
 import ShareIcon from '@mui/icons-material/Share';
 import InsertLinkSharpIcon from '@mui/icons-material/InsertLinkSharp';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
-import { useNavigate } from 'react-router-dom';
 
 
 const ShareButton = ({event} : {event: Event}) => {
   const [anchorEl, setanchorEl] = useState<null | HTMLElement>(null)
-  const navigate = useNavigate()
   const handleonClose = () =>{
     setanchorEl(null)
   }

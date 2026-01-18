@@ -1,5 +1,5 @@
 import React from 'react'
-import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useScrollTrigger } from '@mui/material'
+import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -51,10 +51,6 @@ const Navbar = () => {
         dispatch(logout())
         dispatch(setPersist(false))
     }
-    const trigger = useScrollTrigger({
-      disableHysteresis: true,
-      threshold: 64, // pixels before shrink
-    });
   return (
     <AppBar position="sticky" elevation={1} sx={{maxHeight:64}}>
       <Container maxWidth="xl" >

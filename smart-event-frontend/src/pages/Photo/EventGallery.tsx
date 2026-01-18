@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import  { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../app/store'
@@ -15,7 +15,7 @@ const EventGallery = () => {
   },[dispatch])  
 
     const allEvents = useSelector((state : RootState) => state.event.events) || []
-    console.log(allEvents);
+  
     const newevent = allEvents.find((e)=>e.id === event_id)
     if(!newevent) return <h4>Event Not Found</h4>
 

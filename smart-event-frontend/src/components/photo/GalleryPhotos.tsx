@@ -1,7 +1,4 @@
 import { ImageList, ImageListItem, Stack, Typography } from '@mui/material'
-import { useEffect, useState } from 'react'
-import { publicapi } from '../../services/AxiosService'
-import type { Photo } from '../../types/types'
 import useBreakPointValue from '../../hooks/useMediaQuery'
 import useInfinityPhoto from '../../hooks/useInfinityPhoto'
 import useInfinityScroll from '../../hooks/useInfinityScroll'
@@ -9,7 +6,7 @@ import useInfinityScroll from '../../hooks/useInfinityScroll'
 
 type props = {
   event_id: string | null,
-  layout: string,
+  layout: 'standard' | 'masonry',
   mode: string
 }
 
@@ -36,7 +33,7 @@ const GalleryPhotos = ({ event_id, layout, mode }: props) => {
       <ImageList
         cols={useBreakPointValue({ xs: 4, sm: 5, md: 6 })}
         gap={12}
-        variant={layout ?? 'standard'}
+        variant={layout}
       >
         {photos.length > 0 ? photos.map((item, index) => {
           const isLastPhoto = index === photos.length - 1;
@@ -58,7 +55,7 @@ const GalleryPhotos = ({ event_id, layout, mode }: props) => {
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover', // 🔥 important
+                  objectFit: 'cover',
                   display: 'block',
                 }}
               />

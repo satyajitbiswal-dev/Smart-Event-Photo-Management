@@ -8,8 +8,8 @@ type props = {
     setSearch: React.Dispatch<React.SetStateAction<string | undefined>>,
     filter: string | undefined,
     setFilter: React.Dispatch<React.SetStateAction<string | undefined>>,
-    layout: string | undefined,
-    setLayout: React.Dispatch<React.SetStateAction<string | undefined>>,
+    layout: 'standard' | 'masonry',
+    setLayout: React.Dispatch<React.SetStateAction<'standard' | 'masonry'>>,
 }
 
 const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayout }: props) => {
@@ -37,7 +37,7 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
             >
                 <ToggleButton value="masonry">Masonry</ToggleButton>
                 <ToggleButton value="standard">Grid</ToggleButton>
-                <ToggleButton value="timeline">Timeline</ToggleButton>
+                {/* <ToggleButton value="timeline">Timeline</ToggleButton> */}
             </ToggleButtonGroup>
 
             <Box

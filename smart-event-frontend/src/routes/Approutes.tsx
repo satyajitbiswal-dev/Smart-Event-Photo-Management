@@ -13,10 +13,14 @@ import Admin from "../pages/Profile/Admin";
 import EventCoordinatorPanel from "../pages/Profile/EventCoordinatorPanel";
 import Photographer from "../pages/Profile/Photographer";
 import About from "../pages/About";
-import EventGallery from "../pages/Photo/EventGallery";
 import Event from "../pages/Event/Event";
 import MyFavourites from "../pages/Photo/MyFavourites";
 import Tagged from "../pages/Photo/TaggedIn";
+import { lazy, Suspense } from "react";
+
+const EventGallery = lazy(() => import("../pages/Photo/EventGallery"));
+const NotificationPage = lazy(() => import("../pages/NotificationPage"))
+
 
 
 export const router = createBrowserRouter(
@@ -90,7 +94,9 @@ export const router = createBrowserRouter(
         } />
         <Route path="event/:event_id/photos/" element={
           <Protected authentication  >
-            <EventGallery />
+            <Suspense fallback={<p>loading...</p>}>
+              <EventGallery />
+            </Suspense>
           </Protected>
         } />
 
@@ -105,8 +111,14 @@ export const router = createBrowserRouter(
           </Protected>
         } />
 
+        <Route path="notifications/" element={
+          <Protected authentication allowedRole={['A', 'M']} >
+            <NotificationPage />
+          </Protected>
+        } />
+
+
       </Route>
-      
     </Route>
 
   )

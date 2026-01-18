@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import  { useEffect, useRef } from 'react'
 type infinityscroll = {
     loadmore: () => void,
     loading: boolean,
@@ -17,7 +17,7 @@ const useInfinityScroll = ({loadmore, loading, hasmore}:infinityscroll) => {
                     loadmore();
                 }
             },{
-                threshold:0.3,
+                threshold:0.3 ,
             }
         );
 
