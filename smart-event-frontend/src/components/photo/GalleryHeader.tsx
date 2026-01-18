@@ -1,6 +1,4 @@
 import { Box, Button, Stack, Typography } from '@mui/material'
-import React from 'react'
-import { ArrowBack } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import ShareButton from '../buttons/ShareButton'
 import type { Event } from '../../types/types'

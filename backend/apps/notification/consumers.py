@@ -1,44 +1,40 @@
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import async_to_sync
 import json
 
-class Notification(WebsocketConsumer):
-    def connect(self):
-        self.groups = ["like_broadcast","comment_broadcast"]
+class Notification(AsyncWebsocketConsumer):
+    async def connect(self):
         user = self.scope["user"]
-        if not user.is_authenticated:
-            self.close()
+        if user.is_anonymous:
+            await self.close()
             return
+        
+        self.subscribe_groups = ["like_broadcast","comment_broadcast"]
         if getattr(user,"role",None) != 'P':
-            self.groups.append(f"notify_user_{user.pk}")
+            self.subscribe_groups.append(f"notify_user_{user.pk}")
 
-        self.joined_groups = []
-        for group_name in self.groups:
-            async_to_sync(self.channel_layer.group_add)(
+        
+        for group_name in self.subscribe_groups:
+           await self.channel_layer.group_add(
                 group_name,self.channel_name
             )
-            self.joined_groups.append(group_name)
+           
         
-        self.accept()
+        await self.accept()
     
     
-    def receive(self, text_data = None, bytes_data = None):
-        return super().receive(text_data, bytes_data)
     
-    
-    def disconnect(self,code):
-        for group_name in self.joined_groups:
-            async_to_sync(self.channel_layer.group_discard)(
-                group_name,
+    async def disconnect(self,code):
+        for group in getattr(self, "subscribe_groups", []):
+            await self.channel_layer.group_discard(
+                group,
                 self.channel_name
             )
-        
-        self.joined_groups = []
     
-    def send_notification(self,event):
+    async def send_notification(self,event):
         # Send message to WebSocket
        data = event.get("value")
-       self.send(text_data=json.dumps({"payload": data}))
+       await self.send(text_data=json.dumps(event))
 
 
 # self.groups = [f"notify_user_{user.pk}"]

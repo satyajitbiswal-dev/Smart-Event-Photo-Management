@@ -4,7 +4,29 @@ from django.utils import timezone
 from .models import Notification
 from accounts.models import User
 
+def notify_user(notification: Notification):
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(
+        f"notify_user_{notification.user_id}",
+        {
+            "type": "send_notification",
+            "value": {
+                "id": notification.id,
+                "type": notification.type,
+                "text_message": notification.text_message,
+                "is_seen": notification.is_seen,
+                "send_time": notification.send_time.isoformat(),
+
+                "photo_id":str (notification.photo_id),
+                "comment_id": str(notification.comment_id),
+                "event_id": str(notification.event_id),
+            },
+        },
+    )
+
 #Add Notification creation or updation to all
+
 def photoupload_notification(event,photos,photo_uploader):
     channel_layer = get_channel_layer()
 
@@ -15,44 +37,43 @@ def photoupload_notification(event,photos,photo_uploader):
         s = "photos are"
 
     for member in event_members:
-        async_to_sync(channel_layer.group_send)(
-            f"notify_user_{member.pk}",{
-                "type":"send_notification",
-                "value":{
-                    "message":f"{len(photos)} {s} uploaded to Event {event.event_name}.",
-                    "event_id":str(event.id),
-                }
-            }
+        notif = Notification.objects.create(
+            user = member,
+            type="PHOTO_UPLOADED",
+            text_message=f"{len(photos)} photos uploaded to event {event.event_name}.",
+            event=event,
+            is_seen=False,
         )
+        notify_user(notification=notif)
 
     #for photographer 
-    async_to_sync(channel_layer.group_send)(
-        f"notify_user_{photo_uploader.pk}",
-        {
-            "type":"send_notification",
-            "value":{
-                "message":f"You uploaded {len(photos)} photos to Event {event.event_name}.",
-                "event_id": str(event.id),
-            }
-        }
+    notif = Notification.objects.create(
+        user=photo_uploader,
+        type="PHOTO_UPLOADED_SELF",
+        text_message=f"You uploaded {len(photos)} photos to event {event.event_name}.",
+        event=event,
+        is_seen=False,
     )
+    notify_user(notif)
 
 # message : You are tagged in a photo and sending photo id
 def taguser_notification(photo_tagged_user_dict, event):
     channel_layer = get_channel_layer()
     if event is None:
         event = list(photo_tagged_user_dict.keys())[0].event
+    
     for photo,tagged_users in photo_tagged_user_dict.items():
         for tagged_user in tagged_users:
-            print(photo.photo_id,tagged_user.pk)
-            async_to_sync(channel_layer.group_send)(
-                f"notify_user_{tagged_user.pk}",{
-                "type": "send_notification",
-                 "value":{
-                     "message" : f"You are tagged in a photo of event {event.event_name}.",
-                     "photo_id" : str(photo.photo_id),
-                 }
-            })
+            notif = Notification.objects.create(
+                user = tagged_user,
+                type="PHOTO_UPLOADED",
+                text_message=f"You are tagged in a photo of event {event.event_name}.",
+                event=event,
+                is_seen=False,
+            )
+            notify_user(notification=notif)
+
+
 
 def like_broadcast(photo):
     channel_layer = get_channel_layer()
@@ -71,38 +92,25 @@ def liked_users_db(photo):
     photographer = photo.event.event_photographer
     like_count = photo.liked_users.count()
     if like_count == 0:
-        Notification.objects.filter(user=photographer,type="photographer_like_notif").delete()
+        # Notification.objects.filter(user=photographer,type="photographer_like_notif").delete()
         return
         #delete the notification
-    some_liked_users = list(photo.liked_users.all()[0:2])
+    users = list(photo.liked_users.all()[0:2])
     if like_count == 1:
-        message = f"{some_liked_users[0].username} liked your uploaded photo."
+        message = f"{users[0].username} liked your uploaded photo."
     elif like_count == 2:
-        message = f"{some_liked_users[0].username} and {some_liked_users[1].username} liked your uploaded photo."
+        message = f"{users[0].username} and {users[1].username} liked your uploaded photo."
     else:
-        message = f"{some_liked_users[0].username}, {some_liked_users[1].username} and {like_count-2} others liked your uploaded photo."
+        message = f"{users[0].username}, {users[1].username} and {like_count-2} others liked your uploaded photo."
     
-    obj, created = Notification.objects.update_or_create(
-            user=photographer, type="photographer_like_notif", photo = photo,
+    notif, created = Notification.objects.update_or_create(
+            user=photographer, type="PHOTO_LIKED", photo = photo,
             defaults={"text_message" : message, "is_seen" : False}
-            # create_defaults={"user":photographer, "type":"photographer_like_notif","text_message" : message},
         )
     
-    return message
+    notify_user(notif)
 
-def like_notif_to_photographer(photo,message):
-    channel_layer = get_channel_layer()
-    photographer = photo.event.event_photographer
-    
-    async_to_sync(channel_layer.group_send)(
-        f"notify_user_{photographer.pk}",{
-                "type": "send_notification",
-                 "value":{
-                     "message" : message ,
-                     "photo_id" : str(photo.photo_id),
-                 }
-        }
-    )
+
 
 def comment_broadcast(comment,parent_comment):
     if parent_comment is not None: parent_comment_id = str(parent_comment.id)
@@ -121,60 +129,40 @@ def comment_broadcast(comment,parent_comment):
     )
 
 #There is bug in it
-def build_comment_notification(comment,parent_comment):
+
+def send_comment_notification(comment,parent_comment):
     '''
         When comment is added to direct photo notify to the photograher
         When comment is the reply of another comment notify to the commentator
     '''
-        #delete it from notification db(but how a same comment may have a database)
+     #delete it from notification db(but how a same comment may have a database)
+
     if parent_comment is None:
         parent_commentator = comment.photo.event.event_photographer
         message = f"{comment.user.username} commented on your photo."
     else:
         parent_commentator = parent_comment.user
         message = f"{comment.user.username} replied to your comment."
-     
+
     if parent_commentator == comment.user:
-        return None,None
+        return 
+
+    notif  = Notification.objects.create(user=parent_commentator, type="COMMENT_CREATED", photo = comment.photo,text_message=message, comment=comment)
     
-    return parent_commentator,message
-
-
-def send_comment_notification(comment,parent_commentator,message):
-    Notification.objects.create(user=parent_commentator, type="comment_notif", photo = comment.photo,text_message=message, comment=comment)
-    channel_layer = get_channel_layer()
-
-    async_to_sync(channel_layer.group_send)(
-        f"notify_user_{parent_commentator.pk}",{
-            "type": "send_notification",
-                 "value":{
-                    "photo_id" : str(comment.photo.photo_id),
-                    "message":message,
-            }
-        }
-    )
+    notify_user(notification=notif)
 
 
 def event_notification(event,pk_set):
-    channel_layer = get_channel_layer()
     message = f"You are added to event {event.event_name}-{event.event_date.year}"
 
     for pk in pk_set:
         user = User.objects.filter(pk=pk).first()
-        if event.event_coordinator_id is pk:
+        if event.event_coordinator_id == pk:
             message = f"You are added to event {event.event_name}-{event.event_date.year}.You are assigned as a coordinator for this event."
-        if event.event_photographer_id is pk:
+        if event.event_photographer_id == pk:
             message = f"You are added to event {event.event_name}-{event.event_date.year}.You are assigned as a photographer for this event."
-        Notification.objects.create(user = user, type="event_notif",text_message=message ,event=event)
+        notif = Notification.objects.create(user = user, type="EVENT_NOTIF",text_message=message ,event=event)
 
-        async_to_sync(channel_layer.group_send)(
-            f"notify_user_{pk}",{
-                "type": "send_notification",
-                    "value":{
-                        "event_id" : str(event.id),
-                        "message": message
-                }
-            }
-        )
+        notify_user(notif)
     
     #speacial notification to photographer and event-coordinator 

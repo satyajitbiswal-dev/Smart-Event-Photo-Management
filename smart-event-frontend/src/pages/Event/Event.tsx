@@ -73,7 +73,6 @@ const Event = () => {
                                         {event.description}
                                     </Typography>
 
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                         <Box sx={{ mt: 1 }}>
                                             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
                                                 Organized by
@@ -82,7 +81,6 @@ const Event = () => {
                                                 {event.event_coordinator}
                                             </Typography>
                                         </Box>
-                                    </Typography>
                                 </CardContent>
                                 <CardActions disableSpacing>
                                     <Box display={'flex'} justifyContent={'space-between'} width={'100%'}>

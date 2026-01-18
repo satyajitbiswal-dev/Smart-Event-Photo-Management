@@ -11,7 +11,7 @@ from accounts.models import User
 @shared_task
 def qrcode_generator(event_id):
     event = Event.objects.filter(id=event_id).first()
-    url = f"{settings.BASE_URL}{event.get_absolute_url()}"
+    url = f"{settings.FRONTEND_URL}event//{event.get_absolute_url()}"
     qr = qrcode.QRCode()
     qr.add_data(url)
     img = qr.make_image()

@@ -1,9 +1,11 @@
 import { Box } from '@mui/material'
-import React, { useState } from 'react'
+import  { useState } from 'react'
 import GalleryHeader from './GalleryHeader'
-import GalleryPhotos from './GalleryPhotos'
-import type { Event } from '../../types/types'
 import GalleryControls from './GalleryControls'
+import type { Event } from '../../types/types'
+import { Suspense, lazy } from 'react'
+
+const GalleryPhotos = lazy(() => import('./GalleryPhotos'));
 
 type props = {
   title: string
@@ -28,7 +30,9 @@ const Gallery = ({ title, subtitle, mode, event }: props) => {
 
         {/* RIGHT CONTENT */}
         <Box sx={{ flex: 1 }}>
-          <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout ? layout : 'Grid'} />
+          <Suspense fallback = {<p>loading ....</p>}>
+          <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout ? layout : 'Grid'} mode={mode} />
+          </Suspense>
         </Box>
       </Box>
 

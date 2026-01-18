@@ -11,7 +11,6 @@ const PhotoList = () => {
         const fetchPhoto = async () =>{
             try {
                 const response = await privateapi.get('photos/');
-                console.log('Fetched photo data:', response.data);
                 setPhotos(response.data);
             } catch (error) {
                 console.error('Error fetching photo data:', error);
@@ -20,20 +19,19 @@ const PhotoList = () => {
         fetchPhoto();
     }, [])
     const token = useSelector((state: RootState) => {
-    console.log("STORE TOKEN =", state.auth.access_token);
         return state.auth.access_token;
     });
 
-
+ // errro in dv and p
   return (
     <div>
         This is your Home page
-        {photos?.map(photo=>(
+        {photos.length > 0 ? photos.map(photo=>(
             <div key={photo.photo_id}>
                 <h3>{photo.photo_id}</h3>
                 <img src={photo.thumbnail} alt={photo.photo_id}/>
             </div>
-        ) )}
+        ) ): <p>No Photos to show</p>}
     </div>
   )
 }

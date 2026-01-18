@@ -1,8 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Event, User } from "../types/types";
+import type { Event } from "../types/types";
 import privateapi, { publicapi } from "../services/AxiosService";
 import axios from "axios";
-import { authSlice } from "./authslice";
 
 type EventInitialState = {
     events: Event []
@@ -93,7 +92,7 @@ export const eventSlice = createSlice({
         builder.addCase(fetchEvents.rejected, (state, action) => {
             state.error = action.payload;
         })
-        builder.addCase(fetchEvents.pending, (state, action) => {
+        builder.addCase(fetchEvents.pending, (state) => {
             state.isLoading = true;
         })
         builder.addCase(fetchEvents.fulfilled, (state, action) => {
@@ -114,7 +113,7 @@ export const eventSlice = createSlice({
         builder.addCase(selectEvent.rejected, (state, action) => {
             state.selectedEventError = action.payload as string
         })
-        builder.addCase(selectEvent.pending, (state, action) => {
+        builder.addCase(selectEvent.pending, (state) => {
             state.selectedEventloading = true;
         })
         builder.addCase(selectEvent.fulfilled, (state, action) => {

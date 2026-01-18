@@ -1,7 +1,8 @@
 import { ExpandMore } from '@mui/icons-material';
 import Search from '@mui/icons-material/Search';
-import { Box, Button, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Box, Button, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import React from 'react'
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 type props = {
     search: string | undefined,
     setSearch: React.Dispatch<React.SetStateAction<string | undefined>>,
@@ -16,7 +17,7 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
     return (
         <Box
             sx={{
-                display: {xs: 'none', md: 'block'},
+                display: { xs: 'none', md: 'block' },
                 position: 'sticky',
                 top: 135,
                 height: 'fit-content',
@@ -25,7 +26,7 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
                 p: 2,
                 boxShadow: 2,
             }}>
-            {/* 📐 Layout Toggle - Top */}
+            {/* Layout Toggle - Top */}
             <ToggleButtonGroup
                 value={layout}
                 exclusive
@@ -35,7 +36,7 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
                 onChange={(_, value) => value && setLayout(value)}
             >
                 <ToggleButton value="masonry">Masonry</ToggleButton>
-                <ToggleButton value="grid">Grid</ToggleButton>
+                <ToggleButton value="standard">Grid</ToggleButton>
                 <ToggleButton value="timeline">Timeline</ToggleButton>
             </ToggleButtonGroup>
 
@@ -47,7 +48,7 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
                     bgcolor: 'background.paper',
                 }}
             >
-                {/* 🔍 Search */}
+                {/* Search */}
                 <TextField
                     size="small"
                     fullWidth
@@ -64,6 +65,13 @@ const GalleryControls = ({ search, setSearch, filter, setFilter, layout, setLayo
                         }
                     }}
                 />
+                <Box display={'flex'} alignItems={'center'} gap={1}>
+                    <TuneRoundedIcon color='info'/>
+                    <Typography variant='subtitle2'>
+                        Filters
+                    </Typography>
+                </Box>
+
 
                 {/* 🎛 Filters */}
                 <Stack spacing={1.5} direction={'column'} gap={1}>

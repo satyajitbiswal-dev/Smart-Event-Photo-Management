@@ -1,16 +1,13 @@
 import React from 'react'
-import { AppBar, Avatar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useScrollTrigger } from '@mui/material'
-import AdbIcon from '@mui/icons-material/Adb';
+import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useScrollTrigger } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu';
-import Member from '../../pages/Profile/Profile';
-import Logout from '../../features/auth/Logout';
-import PersonalGallery from '../photo/Gallery';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, setPersist } from '../../app/authslice';
 import { LogoutOutlined } from '@mui/icons-material';
 import ProfilePic from '../../features/auth/ProfilePic';
 import type { RootState } from '../../app/store';
+import Notification from '../buttons/Notification';
 
 const pages = [{
   'name':'Home',
@@ -148,6 +145,7 @@ const Navbar = () => {
             ))}
           </Box>
           <Box sx={{ flexGrow: 0 }}>
+            <Notification/>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                 <ProfilePic/>

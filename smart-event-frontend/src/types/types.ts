@@ -8,6 +8,7 @@ export interface Photo {
     uploadedAt?: string;
     eventId?: string;
     photo?: string;
+    // watermarked_image?: string;
 }
 
 export interface User {
@@ -26,14 +27,24 @@ export interface User {
 export type MemberProfile = Partial<User>;
 
 export interface Event {
-    id : string
-    event_coordinator : string
-    event_photographer : string
-    event_members : string[]
-    event_name : string
-    description : string
-    event_date : string
-    event_time : string
-    qr_code : string
-    slug : string ;
+    id: string
+    event_coordinator: string
+    event_photographer: string
+    event_members: string[]
+    event_name: string
+    description: string
+    event_date: string
+    event_time: string
+    qr_code: string
+    slug: string;
+}
+export interface Notification {
+    id:number;
+    text_message : string;
+    send_time : string;
+    is_seen : boolean;
+    type : string;
+    photo_id ?: string;
+    comment_id ?: string
+    event_id ?: string;
 }

@@ -15,16 +15,15 @@ def liked_user_add(sender, instance, created, *args,**kwargs):
     # print(args,kwargs)
     photo = instance.photo
     like_broadcast(photo=photo)
-    message = liked_users_db(photo=photo)
-    if message is not None:
-        like_notif_to_photographer(photo=photo,message=message)
+    liked_users_db(photo=photo)
 
 @receiver(post_delete,sender=Like)
 def liked_user_delete(sender, instance, *args,**kwargs):
     # print(args,kwargs)
     photo = instance.photo
     like_broadcast(photo=photo)
-    liked_users_db(photo=photo)
+    # liked_users_db(photo=photo)
+
 
 @receiver(post_save,sender=Comment)
 def commented_users_add(sender, instance, created, *args, **kwargs):
@@ -32,9 +31,7 @@ def commented_users_add(sender, instance, created, *args, **kwargs):
         return
     parent_comment = instance.parent_comment
     comment_broadcast(comment=instance,parent_comment=parent_comment)
-    parent_commentator,message = build_comment_notification(comment=instance,parent_comment=parent_comment)
-    if parent_commentator and message:
-        send_comment_notification(comment=instance,parent_commentator=parent_commentator,message=message)
+    send_comment_notification(comment=instance, parent_comment=parent_comment)
 
 @receiver(post_delete,sender=Comment)
 def commented_users_delete(sender, instance, *args, **kwargs):

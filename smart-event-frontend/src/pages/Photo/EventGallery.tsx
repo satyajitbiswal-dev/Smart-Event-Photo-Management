@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import Gallery from '../../components/photo/Gallery'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../app/store'
 import { fetchEvents } from '../../app/eventslice'
+import { Suspense, lazy } from 'react'
+
+const Gallery = lazy(() => import('../../components/photo/Gallery'))
 
 const EventGallery = () => {
   const {event_id} = useParams()
@@ -18,12 +20,14 @@ const EventGallery = () => {
     if(!newevent) return <h4>Event Not Found</h4>
 
   return (
+    <Suspense fallback={<p>loading ...</p>}>
     <Gallery 
     title = {newevent.event_name}
     subtitle={newevent.event_date}
     mode={"event"}
     event={newevent}
     />
+    </Suspense>
   )
 }
 

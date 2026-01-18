@@ -65,7 +65,7 @@ def search(search_query,queryset):
         #  Q(tag_sim__gt = 0.3)
     ).order_by("-event_name_sim")
 
-    #Why the hell its not working WTF is going here
+    #Why the hell its not working WTF is going on here
     # photo2 = queryset.annotate(tag_sim = SearchRank("search_field",query=query)).filter(tag_sim__gt=0.3).order_by('tag_sim')
     photo2=queryset.annotate(search=vector).filter(search=query) #Its bullshit
 

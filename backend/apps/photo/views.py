@@ -13,6 +13,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseBadRequest, FileResponse
 from .filters import *
 from apps.notification.notification import *
+from rest_framework.pagination import PageNumberPagination
+
+class PhotoPagination(PageNumberPagination):
+    page_size = 24
+    page_size_query_param = 'page_size'
+    max_page_size = 50
 
 # Create your views here.
 class PhotoUploadView(generics.GenericAPIView):
@@ -121,6 +127,7 @@ photo_retreive_view = PhotoRetrieveView.as_view()
 class PhotoListView(generics.ListAPIView):
     serializer_class = PhotoListSerializer
     filterset_class = PhotoFilter
+    pagination_class = PhotoPagination
 
     def get_queryset(self):
         qs = Photo.objects.all()

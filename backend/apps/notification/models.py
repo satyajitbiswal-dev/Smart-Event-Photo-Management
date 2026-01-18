@@ -14,5 +14,5 @@ class Notification(models.Model):
     event = models.ForeignKey(Event,blank=True,null=True,on_delete=models.CASCADE)
     # type_id = models.UUIDField()
 
-    def __str__(self):
+    def _str__(self):
          return f"Notification for {self.user.username}: {self.text_message}"
