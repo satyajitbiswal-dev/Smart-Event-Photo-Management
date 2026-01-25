@@ -23,7 +23,6 @@ class Notification(AsyncWebsocketConsumer):
         await self.accept()
     
     
-    
     async def disconnect(self,code):
         for group in getattr(self, "subscribe_groups", []):
             await self.channel_layer.group_discard(
@@ -33,7 +32,14 @@ class Notification(AsyncWebsocketConsumer):
     
     async def send_notification(self,event):
         # Send message to WebSocket
-       data = event.get("value")
+       await self.send(text_data=json.dumps(event))
+    
+    async def like_update(self,event):
+        # Send message to WebSocket
+       await self.send(text_data=json.dumps(event))
+    
+    async def comment_update(self,event):
+        # Send message to WebSocket
        await self.send(text_data=json.dumps(event))
 
 

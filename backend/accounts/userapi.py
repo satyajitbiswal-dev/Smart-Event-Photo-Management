@@ -37,9 +37,9 @@ add_user = AddUser.as_view()
 class RemoveUser(APIView):
     permission_classes = [IsAdminUser]
 
-    def delete(self, request, username, *args, **kwargs):
+    def delete(self, request, email, *args, **kwargs):
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
                 {"error": "User not found"},
@@ -57,31 +57,19 @@ class ListMembers(generics.ListAPIView):
     lookup_field = 'username'
     serializer_class = UserSerializer
 
-    
-# class GetUserRole(APIView):
-#     def post(self,request,*args,**kwargs):
-#         serializer = PublicLoginSerializer(data = request.data)
-#         serializer.is_valid(raise_exception=True)
-#         email = serializer.validated_data.get('email')
-#         user = User.objects.filter(email=email).first()
-#         if user is None:
-#             return Response({'message':'No User Exists'})
-#         return Response({'messaage':f'The role of user is {user.role}'})
-
-# get_user_role = GetUserRole.as_view()
 
 class UpdateUserRole(APIView):
     permission_classes=[IsAdminUser]
-    def patch(self,request,username,*args,**kwargs):
+    def patch(self,request,email,*args,**kwargs):
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
                 {"error": "User not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         new_role = request.data["role"]
-        print(new_role)
+        
         if new_role != 'A' and new_role != 'M':
             return Response(
                 {"error": "Enter a valid role"},

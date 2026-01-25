@@ -57,31 +57,31 @@ def photoupload_notification(event,photos,photo_uploader):
     notify_user(notif)
 
 # message : You are tagged in a photo and sending photo id
-def taguser_notification(photo_tagged_user_dict, event):
-    channel_layer = get_channel_layer()
+def taguser_notification(photo_tagged_user, event):
     if event is None:
-        event = list(photo_tagged_user_dict.keys())[0].event
+        return
     
-    for photo,tagged_users in photo_tagged_user_dict.items():
-        for tagged_user in tagged_users:
+    for user,count in photo_tagged_user.items():
+        if count > 0:
             notif = Notification.objects.create(
-                user = tagged_user,
-                type="PHOTO_UPLOADED",
-                text_message=f"You are tagged in a photo of event {event.event_name}.",
+                user = user,
+                type="PHOTO_UPLOADED_TAG",
+                text_message=f"You are tagged in {count} photo{'s' if count != 1 else ''} of event {event.event_name}",  
                 event=event,
                 is_seen=False,
             )
             notify_user(notification=notif)
 
-
+# count hi bhej de laadle
 
 def like_broadcast(photo):
     channel_layer = get_channel_layer()
     like_count = photo.liked_users.count()
     async_to_sync(channel_layer.group_send)(
         "like_broadcast",{
-            "type":"send_notification",
+            "type":"like_update",
             "value":{
+                     "type": 'LIKE_COUNT_UPDATE',
                      "photo_id" : str(photo.photo_id),
                      "like_count" : like_count,
             }
@@ -118,8 +118,9 @@ def comment_broadcast(comment,parent_comment):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "comment_broadcast",{
-            "type": "send_notification",
+            "type": "comment_update",
                  "value":{
+                    "type" : "Comment Broadcast",
                     "photo_id" : str(comment.photo.photo_id),
                     "parent_comment" : parent_comment_id ,
                     "commentator": comment.user.username,
@@ -127,6 +128,7 @@ def comment_broadcast(comment,parent_comment):
             }
         }
     )
+
 
 #There is bug in it
 
@@ -147,7 +149,10 @@ def send_comment_notification(comment,parent_comment):
     if parent_commentator == comment.user:
         return 
 
-    notif  = Notification.objects.create(user=parent_commentator, type="COMMENT_CREATED", photo = comment.photo,text_message=message, comment=comment)
+    notif  = Notification.objects.create(user=parent_commentator, 
+                                         type="COMMENT_CREATED", 
+                                         photo = comment.photo,text_message=message, 
+                                         comment=comment)
     
     notify_user(notification=notif)
 

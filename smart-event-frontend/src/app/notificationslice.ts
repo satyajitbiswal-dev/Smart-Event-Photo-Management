@@ -45,12 +45,23 @@ export const clearAllNotificationsAPI = () =>
   privateapi.delete("/notification/clear-all/");
 
 
+//Like Notification UI state update
+
+
 export const notificationSlice = createSlice({
     name: 'notification',
     initialState,
     reducers: {
         addNotification: (state, action) => {
-            state.notifications.unshift(action.payload)
+            const notif = action.payload
+            const index = state.notifications.findIndex((e) => e.id === notif.id)
+            if(index !== -1){
+                console.log(index);
+                
+                state.notifications[index] = notif
+            }else{
+                state.notifications.unshift(action.payload)
+            }
         },
         markAsRead: (state, action: PayloadAction<number>) => {
             const notif = state.notifications.find(

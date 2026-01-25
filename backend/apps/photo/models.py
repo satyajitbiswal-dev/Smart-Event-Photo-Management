@@ -4,6 +4,7 @@ import uuid
 from apps.event.models import Event
 from accounts.models import User
 from django.contrib.postgres.search import SearchVectorField
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 class Tag(models.Model):
@@ -32,7 +33,9 @@ class Photo(models.Model):
     tag = models.ManyToManyField(Tag,blank=True,related_name="related_photos")
     liked_users = models.ManyToManyField(User,related_name='liked_photos',through='Like',blank=True)
     is_favourite_of = models.ManyToManyField(User,related_name='favourite_photos',through='Favourite',blank=True)
-    downloaded_by = models.ManyToManyField(User,related_name='downloaded_photos',blank=True)
+
+    view_count = models.PositiveIntegerField(default=0)
+    downloaded = models.ManyToManyField(User,related_name='downloaded_photos',blank=True,through='PhotoDownload')
 
     search_field = SearchVectorField(null=True)
     class Meta:
@@ -108,3 +111,25 @@ class Comment(models.Model):
             "-created"
         ]
     
+
+class PhotoDownload(models.Model):
+    DOWNLOAD_TYPE_CHOICES = [
+        ("original", "Original"),
+        ("watermarked", "Watermarked"),
+    ]
+
+    photo = models.ForeignKey(Photo,on_delete=models.CASCADE)
+    user  = models.ForeignKey(User,on_delete=models.CASCADE)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+    download_type = models.CharField(
+        max_length=11,
+        choices=DOWNLOAD_TYPE_CHOICES
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "download_type", "downloaded_at"]),
+        ]
+        ordering = [
+            "downloaded_at"
+        ]

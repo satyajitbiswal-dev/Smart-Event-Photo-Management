@@ -36,8 +36,7 @@ privateapi.interceptors.response.use(
           {},
           { withCredentials: true }
         );
-        console.log(res);
-        console.log(res)
+        
         store.dispatch(setAccessToken(res.data.access));
         originalRequest.headers.Authorization = `Bearer ${res.data.access}`;
 

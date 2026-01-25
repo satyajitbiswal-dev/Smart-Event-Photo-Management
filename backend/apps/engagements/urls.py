@@ -9,4 +9,5 @@ urlpatterns = [
    path('<uuid:photo_id>/remove_comment/',remove_comment),
    path('favourites/',list_favourites),
    path('tagged/',list_tagged_in),
+   path('<uuid:photo_id>/comments/',CommentFetchbyPhoto.as_view()),
 ]

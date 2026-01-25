@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views,photographer
 
 # /photos ---> base url
 
@@ -10,4 +10,6 @@ urlpatterns = [
     path('update_photo/' , views.update_view),
     path('<uuid:photo_id>/' , views.photo_retreive_view),
     path('<uuid:photo_id>/download/' , views.download_view),
+    path('photographer/dashboard/' , photographer.DashBoardEventView.as_view()),
+    path('<uuid:photo_id>/view/' , views.PhotoViewCountAPIView.as_view()),
 ]

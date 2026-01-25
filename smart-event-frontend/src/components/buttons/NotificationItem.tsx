@@ -17,7 +17,7 @@ type Props = {
     menuopen: boolean;
 };
 
-const NotificationItem = ({ notification, menuopen }: Props) => {
+const NotificationItem = ({ notification }: Props) => {
     const ref = useRef<HTMLLIElement | null>(null);
     const dispatch = useDispatch<AppDispatch>();
 
@@ -75,21 +75,14 @@ const NotificationItem = ({ notification, menuopen }: Props) => {
             >
                 {!notification.is_seen && (
                     <Tooltip title="Mark as read">
-                        <IconButton
-                            size="small"
-                            onClick={handleSeen}
-                        >
+                        <IconButton  size="small"  onClick={handleSeen}>
                             <MarkEmailRead fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 )}
 
                 <Tooltip title="Delete">
-                    <IconButton
-                        size="small"
-                        onClick={handleDelete}
-                        color="error"
-                    >
+                    <IconButton size="small" onClick={handleDelete} color="error" >
                         <DeleteIcon fontSize="small" />
                     </IconButton>
                 </Tooltip>

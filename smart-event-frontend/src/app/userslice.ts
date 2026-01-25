@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "../types/types";
 import privateapi, { publicapi } from "../services/AxiosService";
 import axios from "axios";
@@ -7,19 +7,21 @@ type UserState = {
     userlist: User[];
     isLoading: boolean;
     error: unknown | null;
+    userbyEmails: Record<string, User>
 }
 
 const initialState: UserState = {
     userlist: [],
     isLoading: false,
-    error: null
+    error: null,
+    userbyEmails:{}
 }
 
 export const fetchUsers = createAsyncThunk(
     "users/fetchUsers",
     async () => {
         const response = await publicapi.get('users/')
-        return response.data?.results
+        return response.data
     }
 )
 
@@ -28,7 +30,6 @@ export const createUser = createAsyncThunk(
     async (data: Partial<User>, { rejectWithValue }) => {
         try {
             const response = await privateapi.post('admininterface/add_user/', data)
-            console.log(response.data.user);
             return response.data.user
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
@@ -41,19 +42,19 @@ export const createUser = createAsyncThunk(
 
 export const deleteUser = createAsyncThunk(
     'users/deleteUser',
-    async (username: string) => {
-        const response = await privateapi.delete(`admininterface/remove-user/${username}/`)
-        return username
+    async (email: string) => {
+        const response = await privateapi.delete(`admininterface/remove-user/${email}/`)
+        return email
     }
 )
 
 export const updateUser = createAsyncThunk<
     User,
-    { username: string; data: Partial<User> }
+    { email: string; data: Partial<User> }
 >(
     "events/updateEvent",
-    async ({ username, data }) => {
-        const res = await privateapi.patch(`admininterface/update_user_role/${username}/`, data);
+    async ({ email, data }) => {
+        const res = await privateapi.patch(`admininterface/update_user_role/${email}/`, data);
         return res.data.user;
     }
 );
@@ -62,32 +63,60 @@ export const updateUser = createAsyncThunk<
 const userSlice = createSlice({
     name: "user",
     initialState,
-    reducers: {},
+    reducers: {
+         upsertUsers: (state, action: PayloadAction<User[]>) => {
+            action.payload.forEach(user => {
+                state.userbyEmails[user.email] = user;
+
+                const index = state.userlist.findIndex(
+                u => u.email === user.email
+                );
+
+                if (index === -1) {
+                state.userlist.push(user);
+                } else {
+                state.userlist[index] = user;
+                }
+            });
+         },
+         
+},
     extraReducers: (builder) => {
         builder.addCase(fetchUsers.rejected, (state, action) => {
             state.error = action.payload
         })
-        builder.addCase(fetchUsers.pending, (state, action) => {
+        builder.addCase(fetchUsers.pending, (state) => {
             state.isLoading = true;
         })
         builder.addCase(fetchUsers.fulfilled, (state, action) => {
-            state.userlist = action.payload
+            const users = action.payload
+            state.userlist = users
+            state.userbyEmails = {};
             state.isLoading = false;
             state.error = null;
+            users.forEach((user:User) => {
+                state.userbyEmails[user.email] = user
+            });
         })
 
         builder.addCase(createUser.fulfilled, (state, action) => {
-            state.userlist.push(action.payload)
+            const user = action.payload
+            state.userlist.push(user)
+            state.userbyEmails[user.email] = user
         })
 
         builder.addCase(deleteUser.fulfilled, (state, action) => {
-            state.userlist = state.userlist.filter((user) => (user.username !== action.payload))
+            const email = action.payload
+            state.userlist = state.userlist.filter((user) => (user.email !== email))
+            delete state.userbyEmails[email]
         })
 
         builder.addCase(updateUser.fulfilled, (state, action) => {
-            const index = state.userlist.findIndex((e) => e.username === action.payload.username)
+            const email = action.payload.email
+            const index = state.userlist.findIndex((e) => e.email === email)
             if (index !== -1) {
                 state.userlist[index] = action.payload;
+                state.userbyEmails[email] =action.payload
             }
         });
 
@@ -95,4 +124,6 @@ const userSlice = createSlice({
 })
 
 export default userSlice.reducer
+export const {upsertUsers} = userSlice.actions
 
+// delete user by email

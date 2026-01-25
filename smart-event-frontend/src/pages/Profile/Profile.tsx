@@ -5,11 +5,13 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import privateapi from '../../services/AxiosService';
 import type { MemberProfile, Event } from '../../types/types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const Member = () => {
+  const { username } = useParams()
+
   const [isEditable, setisEditable] = useState<boolean>(false)
-  const username = useSelector((state: RootState) => state.auth.user?.username)
+  const authuser = useSelector((state: RootState) => state.auth.user)
   const [user, setUser] = useState<MemberProfile>({})
   const [originalUser, setOriginalUser] = useState<MemberProfile>({}) // Store original data for cancel
   const [profilePicFile, setProfilePicFile] = useState<File | null>(null)
@@ -37,7 +39,7 @@ const Member = () => {
     const fetchProfile = async () => {
       try {
         const response = await privateapi.get(`/profile/${username}/`);
-        console.log(response.data);
+        // console.log(response.data);
         const userData = response.data;
         setUser(userData);
         setOriginalUser({ ...userData }); // Store original data (deep copy)
@@ -347,17 +349,9 @@ const Member = () => {
           />
         </Box>
         {/* Activities */}
-        {/* {user.role === 'A' &&
-          <Box mt={3}>
-            <Typography variant="h6" color="text.secondary" component={"span"}>
-              Admin Panel:
-            </Typography>
-            <Button
-              onClick={() => { navigate('/admin') }}>
-              Go to Admin Panel
-            </Button>
-          </Box>
-        } */}
+        
+       { authuser?.username === username && 
+       <>
         <Stack mt={3} direction="row" alignItems={"center"} spacing={1}>
           <Typography variant="h6" color="text.secondary" component={"span"}>
             Coordinated Events :
@@ -379,7 +373,7 @@ const Member = () => {
           <Button
               variant='contained'
               disabled = {selectedCoordinatedEvent == "" ? true : false}
-              onClick={() => { navigate(`/event_coordinator/${selectedCoordinatedEvent}`) }}>
+              onClick={() => { navigate(`/event/${selectedCoordinatedEvent}`) }}>
               Go
             </Button>
         </Stack>
@@ -421,6 +415,8 @@ const Member = () => {
             </Button>
           </ButtonGroup>
         </Box>
+      </>
+        }
       </Paper>
     </Box>
   )

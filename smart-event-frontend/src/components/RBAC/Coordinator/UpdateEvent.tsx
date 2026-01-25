@@ -1,36 +1,64 @@
-import { Autocomplete, Box, Button, ButtonGroup, Grid, Paper, TextField, Typography } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import { Box, Button, ButtonGroup, Divider, Grid, Paper, TextField, Typography } from '@mui/material'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { type AppDispatch, type RootState } from '../../../app/store'
-import { cleardispatchEvent, selectEvent } from '../../../app/eventslice'
-import type { User } from '../../../types/types'
+import { cleardispatchEvent, selectEvent, updateEvent } from '../../../app/eventslice'
+import type { Event } from '../../../types/types'
 import { EventMembersSelect } from './EventMemberSelect'
-import { fetchUsers } from '../../../app/userslice'
+import dayjs from 'dayjs'
+import toastMessage from '../../../pages/toastStyle'
 
-const UpdateEvent = ({ event_id }) => {
-  const [isEditable, setIsEditable] = useState<boolean>(false)
-  const dispatch = useDispatch<AppDispatch>()
+const UpdateEvent = ({event_id}) => {
   const authUser = useSelector((state: RootState) => state.auth.user)
-  const userlist = useSelector((state: RootState) => state.user.userlist)
-  const [updatedMembers, setUpdatedMembers] = useState<string[]>([])
-
   const { selectedEvent, selectedEventloading, selectedEventError } = useSelector((state: RootState) => state.event)
 
-  useEffect(() => {
-      dispatch(fetchUsers())
-  },[dispatch])
+  const dispatch = useDispatch<AppDispatch>()
   useEffect(() => {
     if (!selectedEvent || selectedEvent.id !== event_id) {
       dispatch(selectEvent(event_id))
     }
-
     return () => {
       dispatch(cleardispatchEvent())
     }
   }, [event_id])
+  
+  
+
+  const [isEditable, setIsEditable] = useState<boolean>(false)
+
+  const protectedEmails = useMemo(() => {
+      const set = new Set<string>();
+      if (selectedEvent?.event_coordinator) set.add(selectedEvent.event_coordinator);
+      if (selectedEvent?.event_photographer) set.add(selectedEvent.event_photographer);
+      return Array.from(set);
+    }, [ selectedEvent ]);
+  
+    const initialEmails = useMemo(() => {
+      return Array.from( new Set([   ...(selectedEvent?.event_members ?? []),   ...protectedEmails, ])
+      );
+    }, [selectedEvent?.event_members, protectedEmails]);
+
+    const [members, setMembers] = useState<string[]>(initialEmails );
+
+  const [form, setForm] = useState<Partial<Event> | null>(selectedEvent)
+  const [originalForm, setOriginalForm] = useState<Partial<Event> | null>(selectedEvent)
+
   useEffect(() => {
-    console.log(selectedEvent);
-  }, [selectedEvent])
+    if(!selectedEvent) return;
+    setForm(selectedEvent);
+    setOriginalForm(selectedEvent)
+    setMembers(initialEmails);
+  }, [selectedEvent,initialEmails])
+
+
+  const handleChange = (e) => {
+    if (form) {
+      setForm(prev => (
+        { ...prev, [e.target.name]: e.target.value ?? null }
+      ))
+    }
+
+  }
 
   if (selectedEventloading) return <h4>loading...</h4>
   if (!selectedEvent) return <h5>Event not found</h5>
@@ -41,135 +69,198 @@ const UpdateEvent = ({ event_id }) => {
     <div>{selectedEventError}</div>
   </>)
 
+  const handleToggle = () => {
+    if (isEditable) {
+      setForm(originalForm)
+      setMembers (initialEmails)
+    }
+    setIsEditable(!isEditable)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      event_name: formData.get('name'),
-      event_date: formData.get('date'),
-      event_time: formData.get('time'),
-      description: formData.get('bio'),
-      event_members: updatedMembers,
-    };
-    console.log('Updated Event Data:', data);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const formJson: Partial<Event> = Object.fromEntries(formData.entries())
+      if (formJson['event_time']) {
+        formJson['event_time'] = dayjs(formJson['event_time'], ["h:m A", "H:m"]).format("HH:mm");
+      }
+      // formJson['event_members'] = updatedMembers
+      await dispatch(updateEvent({ id: selectedEvent.id, data: formJson })).unwrap()
+      // toastMessage('Event Update Successfully')
+    } catch (error) {
+      if (typeof error === 'object' && error !== null) {
+        for (const key in error) {
+          const value = error[key];
+          if (Array.isArray(value)) {
+            value.forEach(msg => toastMessage(msg, "top-right"));
+          } else {
+            // Single string
+            toastMessage(value as string, "top-right");
+          }
+        }
+      } else {
+        toastMessage(error, 'top-right')
+      }
+    }
   }
+
 
 
   return (
     <Box sx={{ backgroundColor: '#f8fafc', py: { xs: 2, md: 4 }, px: { xs: 1, md: 2 } }}>
-      <Box sx={{ maxWidth: { xs: '100%', md: 1100 } }} mx={"auto"}>
+      <Box sx={{ maxWidth: { xs: '100%', md: 1100 } }} mx={"auto"} position={'relative'}>
+
+        {!isEditable && <Paper
+          elevation={4}
+          sx={{
+            position: "absolute",
+            top: { xs: -40, md: -40 },
+            left: "50%",
+            transform: "translateX(-50%)",
+            px: { xs: 2, md: 4 },
+            py: { xs: 1.5, md: 2 },
+            borderRadius: 3,
+            minWidth: { xs: "85%", md: 600 },
+            background: "linear-gradient(135deg, #6366f1, #22d3ee)",
+            color: "white",
+            zIndex: 2,
+          }}
+        >
+          <Typography variant="h6" fontWeight={700}>
+            {selectedEvent.event_name}
+          </Typography>
+
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            {selectedEvent.event_date}{selectedEvent.event_time ? ` • ${selectedEvent.event_time}` : ''}
+          </Typography>
+        </Paper>}
+
         <Paper elevation={3} sx={{
-          p: { xs: 2, md: 4 }, borderRadius: { xs: 2, md: 3 },
-          textAlign: "center",
+          mt: { xs: 6, md: 7 },
+          mx: { xs: 2, md: 4 },
+          p: { xs: 4, md: 6 },
+          pt: { xs: 6, md: 7 },
+          borderRadius: { xs: 2, md: 3 },
+          textAlign: "left",
           background: "linear-gradient(135deg, #ffffff, #f1f5f9)",
         }}>
+
           <form id='event-update-form' onSubmit={handleSubmit}>
             <Grid container spacing={2} >
-              <Grid size={{ xs: 12, md: 6 }}>
+              {isEditable && <> <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  name="name"
-                  value={selectedEvent.event_name ?? ""}
+                  name="event_name"
+                  value={form?.event_name ?? ""}
                   fullWidth
                   size="small"
                   variant={isEditable ? "outlined" : "standard"}
                   slotProps={{ input: { readOnly: !isEditable } }}
                   sx={{ mt: 0.5 }}
+                  onChange={handleChange}
+
                   label='Event Name'
+                />
+              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    label='Event Date'
+                    name="event_date"
+                    type="date"
+                    value={form?.event_date ?? ""}
+                    fullWidth
+                    size="small"
+                    variant={isEditable ? "outlined" : "standard"}
+                    slotProps={{ input: { readOnly: !isEditable }, inputLabel: { shrink: true } }}
+                    onChange={handleChange}
+
+                    sx={{ mt: 0.5 }}
+                  />
+                </Grid>
+              </>
+              }
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  disabled
+                  name="event_coordinator"
+                  value={form?.event_coordinator ?? ""}
+                  fullWidth
+                  size="small"
+                  variant={isEditable ? "outlined" : "standard"}
+                  slotProps={{ input: { readOnly: !isEditable } }}
+                  sx={{ mt: 0.5 }}
+                  onChange={handleChange}
+
+                  label='Event Coordinator'
+
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   disabled
-                  name="username"
-                  value={selectedEvent.event_coordinator ?? ""}
+                  name="event_photographer"
+                  value={form?.event_photographer ?? ""}
                   fullWidth
                   size="small"
                   variant={isEditable ? "outlined" : "standard"}
                   slotProps={{ input: { readOnly: !isEditable } }}
                   sx={{ mt: 0.5 }}
-                  label='Event Coordinator'
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  label='Event Date'
-                  name="date"
-                  type="date"
-                  value={selectedEvent.event_date ?? ""}
-                  fullWidth
-                  size="small"
-                  variant={isEditable ? "outlined" : "standard"}
-                  slotProps={{ input: { readOnly: !isEditable }, inputLabel: { shrink: true } }}
-                  // onChange={handleChange}
-                  sx={{ mt: 0.5 }}
+                  onChange={handleChange}
+
+                  label='Event Photographer'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='Event Time'
-                  name="time"
+                  name="event_time"
                   type="time"
-                  value={selectedEvent.event_time ?? ""}
+                  value={form?.event_time ?? ""}
                   fullWidth
                   size="small"
                   variant={isEditable ? "outlined" : "standard"}
                   slotProps={{ input: { readOnly: !isEditable }, inputLabel: { shrink: true } }}
-                  // onChange={handleChange}
+                  onChange={handleChange}
                   sx={{ mt: 0.5 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  disabled
-                  name="photographer"
-                  value={selectedEvent.event_photographer ?? ""}
-                  fullWidth
-                  size="small"
-                  variant={isEditable ? "outlined" : "standard"}
-                  slotProps={{ input: { readOnly: !isEditable } }}
-                  sx={{ mt: 0.5 }}
-                  label='Event Photographer'
-                />
-              </Grid>
+
             </Grid>
 
             <Box mt={3} mb={3}>
               <TextField
-                name="bio"
-                value={selectedEvent.description ?? ""}
+                name="description"
+                value={form?.description ?? ""}
                 fullWidth
                 multiline
                 rows={4}
                 variant={isEditable ? "outlined" : "standard"}
                 slotProps={{ input: { readOnly: !isEditable } }}
-                // onChange={handleChange}
+                onChange={handleChange}
                 // error
                 sx={{ mt: 0.5 }}
                 label='Event Description'
-                // placeholder='Write the event description in max 300 words'
+                placeholder={selectedEvent.event_coordinator === authUser?.email ? 'Write the event description in max 300 words' : ''}
               />
             </Box>
+
             <EventMembersSelect
-              userlist={userlist}
-              event_members={selectedEvent.event_members}
-              event_coordinator_email={selectedEvent.event_coordinator}
-              event_photographer_email={selectedEvent.event_photographer}
+              event={form}
               isEditMode={isEditable}
-              onChange={(emails) => {
-                setUpdatedMembers(emails);
-              }}
+              protectedEmails={protectedEmails}
+              members={members}
+              setMembers={setMembers} 
             />
 
 
           </form>
           {
-            selectedEvent &&
+            selectedEvent.event_coordinator === authUser?.email &&
             <ButtonGroup>
-              <Button variant={isEditable ? "outlined" : "contained"} onClick={() => setIsEditable(!isEditable)}>
+              <Button variant={isEditable ? "outlined" : "contained"} onClick={handleToggle}>
                 {isEditable ? "Cancel" : "Edit Changes"}</Button>
-              <Button variant={isEditable ? "contained" : "outlined"} disabled={!isEditable}>Save Changes</Button>
+              <Button variant={isEditable ? "contained" : "outlined"} disabled={!isEditable} type='submit' form='event-update-form' >Save Changes</Button>
             </ButtonGroup>
           }
         </Paper>

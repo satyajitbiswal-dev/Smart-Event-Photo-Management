@@ -23,7 +23,6 @@ class JwtAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
         close_old_connections()
 
-        print("🔥 RAW QUERY STRING:", scope["query_string"])
 
         query_params = parse_qs(scope["query_string"].decode())
         token_list = query_params.get("token")
@@ -45,12 +44,10 @@ class JwtAuthMiddleware(BaseMiddleware):
 
             decoded = token_backend.decode(token, verify=True)
 
-            print("🔥 JWT DECODED:", decoded)
 
             scope["user"] = await get_user(decoded["user_id"])
 
         except (InvalidToken, TokenError, KeyError) as e:
-            print("❌ JWT ERROR:", e)
             scope["user"] = AnonymousUser()
 
         return await super().__call__(scope, receive, send)

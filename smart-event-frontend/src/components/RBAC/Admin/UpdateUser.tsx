@@ -35,8 +35,8 @@ const UpdateUser = () => {
         const formData = new FormData(event.currentTarget)
         const formJson: Partial<User> = Object.fromEntries(formData.entries())
         try {
-            const username: string = selectedUser.username
-            dispatch(updateUser({ username: username, data: formJson })).unwrap()
+            const email: string = selectedUser.email
+            dispatch(updateUser({ email: email, data: formJson })).unwrap()
             handleClose()
         } catch (err: any) {
             if (axios.isAxiosError(err)) {

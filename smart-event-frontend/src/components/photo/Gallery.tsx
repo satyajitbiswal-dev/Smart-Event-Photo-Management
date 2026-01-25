@@ -12,9 +12,10 @@ type props = {
   subtitle: string
   mode: string
   event: Event | null
+  viewMode: 'view' | 'bulk'
 }
 
-const Gallery = ({ title, subtitle, mode, event }: props) => {
+const Gallery = ({ title, subtitle, mode, event, viewMode }: props) => {
 
   const [search, setSearch] = useState<string | undefined>()
   const [filter, setFilter] = useState<string | undefined>()
@@ -31,7 +32,7 @@ const Gallery = ({ title, subtitle, mode, event }: props) => {
         {/* RIGHT CONTENT */}
         <Box sx={{ flex: 1 }}>
           <Suspense fallback = {<p>loading ....</p>}>
-          <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout} mode={mode} />
+              <GalleryPhotos event_id={event?.id ? event.id : null} layout={layout} mode={mode} viewMode={viewMode ? viewMode : 'view'} />
           </Suspense>
         </Box>
       </Box>

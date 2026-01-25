@@ -59,7 +59,7 @@ class PhotoBulkUpdateSerialier(serializers.Serializer):
         child = serializers.UUIDField(),
         write_only = True
     )
-    event = serializers.SlugRelatedField(slug_field='event_name',queryset=Event.objects.all(),required=False) #validation checked
+    event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all(),required=False) #validation checked
     tagged_users = serializers.SlugRelatedField(slug_field='email',queryset=User.objects.all(),many=True,required=False) #validation checked
     is_private = serializers.BooleanField(required = False)
     tags = serializers.ListField(
@@ -73,13 +73,31 @@ class PhotoDestroySerializer(serializers.Serializer):
         write_only = True
     )
 
+class PhotoEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = [
+            'id',
+            'event_name',
+            'event_date'
+        ]
+
+class PhotoTaggedUsers(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'profile_pic',
+            'email'
+        ]
 
 class PhotoSerializer(serializers.ModelSerializer):
     tag = serializers.SlugRelatedField(slug_field='tag_name',read_only=True, many=True)
     like_count = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
-    tagged_user = serializers.SlugRelatedField(slug_field='username',read_only=True, many=True)
-    event = serializers.SlugRelatedField(slug_field='event_name',read_only=True)
+    tagged_user = PhotoTaggedUsers(read_only=True, many=True)
+    liked_users = serializers.SlugRelatedField(slug_field='email',read_only=True, many=True)
+    is_favourite_of = serializers.SlugRelatedField(slug_field='email',read_only=True, many=True)
     class Meta:
         model = Photo
         fields = [
@@ -98,6 +116,8 @@ class PhotoSerializer(serializers.ModelSerializer):
             "tagged_user", 
             "tag", 
             "like_count", 
+            "liked_users",
+            'is_favourite_of'
         ]
 
     def get_image_url(self, obj):
@@ -134,3 +154,33 @@ class PhotoListSerializer(serializers.ModelSerializer):
             "thumbnail",
         ]
 
+
+
+from rest_framework import serializers
+
+
+class DashboardSummarySerializer(serializers.Serializer):
+    total_events = serializers.IntegerField()
+    total_photos = serializers.IntegerField()
+    total_views = serializers.IntegerField()
+    total_likes = serializers.IntegerField()
+    total_comments = serializers.IntegerField()
+    total_downloads = serializers.IntegerField()
+
+
+class DashboardEventSerializer(serializers.Serializer):
+    event = PhotoEventSerializer()
+
+    photo_count = serializers.IntegerField()
+    view_count = serializers.IntegerField()
+    like_count = serializers.IntegerField()
+    comment_count = serializers.IntegerField()
+    download_count = serializers.IntegerField()
+
+
+class PhotographerDashboardSerializer(serializers.Serializer):
+    summary = DashboardSummarySerializer()
+    events = DashboardEventSerializer(many=True)
+
+
+    

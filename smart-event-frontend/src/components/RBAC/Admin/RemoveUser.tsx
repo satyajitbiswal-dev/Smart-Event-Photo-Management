@@ -33,8 +33,8 @@ const RemoveUser = () => {
         event.preventDefault();
         if(!removedUser) return;
         try {
-            const username = removedUser.username
-            await dispatch(deleteUser(username)).unwrap()
+            const email = removedUser.email
+            await dispatch(deleteUser(email)).unwrap()
             handleClose()
         }  catch (error: unknown) {
             if (axios.isAxiosError(error)) {
@@ -72,9 +72,9 @@ const RemoveUser = () => {
                             <Autocomplete
                                 disablePortal
                                 fullWidth
-                                options={userlist ?? []}
                                 value={removedUser}
                                 onChange={(e, newValue:User|null) => setRemovedUser(newValue)}
+                                options={userlist ?? []}
                                 getOptionLabel={(option) => option.email || ""}
                                 renderInput={(params) => <TextField {...params} size='small' required placeholder='Enter the user email' helperText="User must be an active member or admin of club" fullWidth />}
                                 renderOption={(props, option) => {

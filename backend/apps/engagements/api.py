@@ -6,6 +6,7 @@ from rest_framework import generics
 from apps.photo.serializers import PhotoListSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import *
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_201_CREATED
 # Create your views here.
 
@@ -92,32 +93,42 @@ list_tagged_in = ListTaggedInPhotos.as_view()
 
 # Add Comments for a photo
 class CommentAdd(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self,request,photo_id,*args,**kwargs):
         user = request.user
-        serializer = CommentSerializer(data=request.data,context={"photo_id":photo_id,"request":request})
+        serializer = CommentActionSerializer(data=request.data,context={"photo_id":photo_id,"request":request})
         serializer.is_valid(raise_exception=True)
         photo = get_object_or_404(Photo,photo_id=photo_id)
-        serializer.save(user=user,photo=photo)
+        comment = serializer.save(user=user,photo=photo)
 
-        return Response({
-            "message":"Comment added successfully."
-        },status=HTTP_201_CREATED
-    )
+        return Response(CommentSerializer(comment).data,status=HTTP_201_CREATED)
 
 add_comment = CommentAdd.as_view()
 # Delete Comments for a photo
 class CommentRemove(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self,request,photo_id,*args,**kwargs):
         user = request.user
         photo = get_object_or_404(Photo,photo_id=photo_id)
         comment_id = request.data.get("comment_id")
         comment = get_object_or_404(Comment, id=comment_id, user=user, photo=photo)
+        
         comment.delete()
     
         return Response({
+            "id":comment_id,
+            "photo_id":photo_id,
             "message": "Comment deleted successfully."
         })
         
 
 remove_comment = CommentRemove.as_view()
 
+
+class CommentFetchbyPhoto(generics.ListAPIView):
+    serializer_class = CommentSerializer
+    # permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        photo_id = self.kwargs.get('photo_id')
+        qs = Comment.objects.filter(photo__photo_id=photo_id)
+        return qs

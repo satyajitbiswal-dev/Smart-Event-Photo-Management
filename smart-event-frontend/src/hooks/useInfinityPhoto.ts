@@ -1,48 +1,39 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import type { Photo } from '../types/types';
-import useFetch from './useFetch';
+import { useCallback, useEffect, useState } from "react"
+import useFetch from "./useFetch"
 
-const useInfinityPhoto = (url: string | null) => {
-  const [page, setPage] = useState<number>(1);
-  const [photos, setPhotos] = useState<Photo[]>([])
-  const [loading, setloading] = useState<boolean>(false)
-  const [hasmore, setHasMore] = useState<boolean>(true)
+const useInfinityPhoto = (url: string | null, event_id: string | null) => {
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
 
-
-  const data = useFetch( `${url}&page=${page}`)
-
-  useEffect(() => {
-    setloading(true)
-  }, [page])
-
-  useEffect(() => {
-    if (!data) return
-    setPhotos(prev => [...prev, ...data.results]);
-    setHasMore(Boolean(data.next));
-    setloading(false);
-  }, [data])
-
-  const loadmore = useCallback(
-    () => {
-      if (loading || !hasmore) return;
-      setPage(prev => prev + 1);
-    },
-    [loading, hasmore],
+  const data = useFetch(
+    url ? `${url}&page=${page}` : null,
+    event_id
   )
 
-  if (!url) {
-    return {
-      photos: [],
-      loadmore: () => {},
-      hasmore: false,
-      loading: false,
-    };
-  }
+  /* reset when url / event changes */
+  useEffect(() => {
+    setPage(1)
+    setHasMore(true)
+  }, [url, event_id])
+
+  /* handle pagination meta only */
+  useEffect(() => {
+    if (!data) return
+    setHasMore(Boolean(data.next))
+    setLoading(false)
+  }, [data])
+
+  const loadmore = useCallback(() => {
+    if (loading || !hasMore) return
+    setLoading(true)
+    setPage(prev => prev + 1)
+  }, [loading, hasMore])
+
   return {
-    photos,
+    loading,
     loadmore,
-    hasmore,
-    loading
+    hasmore: hasMore
   }
 }
 

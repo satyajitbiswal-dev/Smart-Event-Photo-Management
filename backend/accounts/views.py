@@ -39,11 +39,11 @@ class UserProfileAPIView(generics.RetrieveAPIView):
             return PublicUserSerializer
         return UserSerializer
     
-    def get_object(self):
-        obj = super().get_object()
-        if obj != self.request.user:
-           raise PermissionDenied("You cannot view other user's profile")
-        return obj
+    # def get_object(self):
+    #     obj = super().get_object()
+    #     if obj != self.request.user:
+    #        raise PermissionDenied("You cannot view other user's profile")
+    #     return obj
 
 
 profile_view = UserProfileAPIView.as_view()
@@ -60,7 +60,7 @@ class UserProfileUpdateView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         obj = super().get_object()
         if obj != self.request.user:
-           raise PermissionDenied("You cannot view other user's profile")
+           raise PermissionDenied("You cannot update other user's profile")
         return obj
 
 class ProfilePicUpdateView(generics.UpdateAPIView):

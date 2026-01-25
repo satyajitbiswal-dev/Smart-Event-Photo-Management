@@ -20,11 +20,20 @@ const pages = [{
 {
   'name':'Events',
   'route':'/event'
+},
+{
+  'name':'Favourites',
+  'route':'/favourites'
+},
+{
+  'name':'Tagged',
+  'route':'/tagged'
 }
 ];
 
 
 const Navbar = () => {
+  const authuser = useSelector((state:RootState) => state.auth.user)
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
@@ -108,6 +117,7 @@ const Navbar = () => {
                   <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
                 </MenuItem>
               ))}
+              
             </Menu>
           </Box>
           {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
@@ -164,7 +174,7 @@ const Navbar = () => {
               onClose={handleCloseUserMenu}
             >
               <MenuItem key="Profile" onClick={()=>{handleCloseUserMenu();
-                navigate('/profile')}}>
+                navigate(`/profile/${authUser?.username}/`)}}>
                 Profile
               </MenuItem>
              {authUser?.role === 'A' && <MenuItem key="Admin" onClick={()=>{handleCloseUserMenu();

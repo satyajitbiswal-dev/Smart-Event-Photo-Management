@@ -7,7 +7,7 @@ import { Suspense, lazy } from 'react'
 
 const Gallery = lazy(() => import('../../components/photo/Gallery'))
 
-const EventGallery = () => {
+const EventGallery = ({viewMode}:{viewMode: 'bulk' | 'view'} ) => {
   const {event_id} = useParams()
   const dispatch = useDispatch<AppDispatch>()
   useEffect(()=>{
@@ -18,7 +18,7 @@ const EventGallery = () => {
   
     const newevent = allEvents.find((e)=>e.id === event_id)
     if(!newevent) return <h4>Event Not Found</h4>
-
+    
   return (
     <Suspense fallback={<p>loading ...</p>}>
     <Gallery 
@@ -26,6 +26,7 @@ const EventGallery = () => {
     subtitle={newevent.event_date}
     mode={"event"}
     event={newevent}
+    viewMode = {viewMode}
     />
     </Suspense>
   )

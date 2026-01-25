@@ -8,12 +8,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .tasks import *
 import os
-from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseBadRequest, FileResponse
 from .filters import *
 from apps.notification.notification import *
 from rest_framework.pagination import PageNumberPagination
+from collections import defaultdict
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class PhotoPagination(PageNumberPagination):
     page_size = 24
@@ -32,19 +34,21 @@ class PhotoUploadView(generics.GenericAPIView):
         photos = serializer.save(event=event) 
         # get event and tagged users 
         tagged_users = serializer.validated_data.get("tagged_users",None)
-        photo_tagged_users_dict = {}
+
         for photo in photos:
             extract_exif.delay(photo.photo_id)
             generate_thumbnail.delay(photo.photo_id)
             add_watermark.delay(photo.photo_id,photo.event.event_name)
             generate_tag.delay(photo.photo_id)
-            if tagged_users is not None: photo_tagged_users_dict.update({photo:tagged_users})
-        
+           
         #send notifications
         photo_uploader = request.user
         photoupload_notification(event=event,photos=photos,photo_uploader=photo_uploader)
         if tagged_users is not None:
-            taguser_notification(photo_tagged_user_dict=photo_tagged_users_dict,event=event)
+            photo_tagged_user = defaultdict(int)
+            for tagged_user in tagged_users:
+                photo_tagged_user[tagged_user] = len(photos)
+            taguser_notification(photo_tagged_user=photo_tagged_user,event=event)
 
         return Response({
             "message": "Photos are created successfully",
@@ -70,8 +74,9 @@ delete_photos = PhotoBulkDeleteView.as_view()
 #correct handles now will create get for all attribute later
 class BulkPhotoUpdate(generics.GenericAPIView):
     queryset = Photo.objects.all()
-    serializer_class = PhotoBulkUploadSerializer
+    serializer_class = PhotoBulkUpdateSerialier
     permission_classes = [IsEventPhotoGrapher]
+
     def patch(self,request,*args,**kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -90,22 +95,45 @@ class BulkPhotoUpdate(generics.GenericAPIView):
             photos.update(**updated_data)
         #set new tags
         updated_tags = []
-        photo_tagged_user_dict={}
         if tags is not None:
                 for tag in tags:
                     tag_instance = Tag.objects.get_or_create(tag_name=tag)[0]
                     updated_tags.append(tag_instance)
-        for photo in photos:
-            if tags is not None : photo.tag.set(updated_tags)
-            #get new tagged_users for each photo for sending notification
-            if tagged_users is not None:
-                old_tagged_users = photo.tagged_user.all()
-                new_tagged_users=set(tagged_users)-set(old_tagged_users)
-                photo_tagged_user_dict.update({photo : list(new_tagged_users)})
-                photo.tagged_user.set(tagged_users)
 
+        photo_tagged_user = defaultdict(int)
+        if tagged_users:
+            new_tagged_users = set(tagged_users)
+            existing_tagged = (
+                    Photo.tagged_user.through.objects.filter(photo_id__in=photos.values_list("photo_id", flat=True))
+                    .values_list("photo_id", "user_id")
+            )
+            photo_to_users = defaultdict(set)
+            for photo_id, user_id in existing_tagged:
+                photo_to_users[photo_id].add(user_id)
+
+        
+        for photo in photos:
+            if tags is not None : photo.tag.add(*updated_tags)
+            #get new tagged_users for each photo for sending notification
+            if tagged_users:
+                already = photo_to_users.get(photo.photo_id, set())
+                newly_added = new_tagged_users - already
+                for user in newly_added:
+                    photo_tagged_user[user] += 1
+        if tagged_users:
+            Photo.tagged_user.through.objects.bulk_create([
+                Photo.tagged_user.through(photo_id=photo.photo_id, user_id=user.id)
+                for photo in photos 
+                for user in new_tagged_users
+                if user not in photo_to_users.get(photo.photo_id, set())
+            ],
+        ignore_conflicts=True
+    )
+        
         #send tag user notification
-        taguser_notification(photo_tagged_user_dict=photo_tagged_user_dict,event=event)
+        updated_event = event or photos[0].event
+        taguser_notification(photo_tagged_user=photo_tagged_user,event=updated_event) #photo_tagged_user = {user: photo_count}
+        
         return Response({
             "message":"Photos are updated successfully"
         })
@@ -164,26 +192,115 @@ photo_list_view = PhotoListView.as_view()
 
 
 class DownloadAPIView(APIView):
-    def get(self,request,photo_id,*args,**kwargs):
+    def post(self,request,photo_id,*args,**kwargs):
         #public not allowed
-        if request.user.role == 'P':
+        if not request.user.is_authenticated or request.user.role == "P":
             raise PermissionDenied("Only Members can Download Photos")
+        
         #For members 
         photo=get_object_or_404(Photo,photo_id=photo_id)
+        user = request.user
         
         image_type = request.query_params.get("image_type","watermarked")
+
         if image_type == "original":
             image_file =  photo.photo.path
+            limit_time = timezone.now() - timedelta(days=30)
+
+            count = PhotoDownload.objects.filter(
+                user=request.user,
+                download_type="original",
+                downloaded_at__gte=limit_time).count()
+            if count >= 50:
+                return Response(
+                    {"message": "Monthly original download limit reached", "limit": 50},
+                    status=403
+                )
         elif image_type == "watermarked":
             image_file = photo.watermarked_image.path
         else:
             return HttpResponseBadRequest("Please Provide a valid type")
         
+        PhotoDownload.objects.create(
+            photo_id=photo_id,
+            user=request.user,
+            download_type=image_type
+        )
+
         response = FileResponse(open(image_file, "rb"), as_attachment=True)
         response["Content-Disposition"] = f'attachment; filename="{os.path.basename(image_file)}"'
-        photo.downloaded_by.add(request.user)
+
         return response
+    
        
 download_view = DownloadAPIView.as_view()
 
+class RemainingDownloadAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        LIMIT = 50
+        user = request.user
 
+        limit_time = timezone.now() - timedelta(days=30)
+
+        qs = PhotoDownload.objects.filter(
+            user=user,
+            download_type="original",
+            downloaded_at__gte=limit_time
+        )
+
+        count = qs.count()
+        remaining = max(0, LIMIT - count)
+
+        earliest = qs.order_by("downloaded_at").first()
+        reset_time = (
+            earliest.downloaded_at + timedelta(days=30)
+            if earliest else None
+        )
+
+        return Response({
+            "limit": LIMIT,
+            "used": count,
+            "remaining": remaining,
+            "reset_time": reset_time,
+            "blocked": count >= LIMIT
+        })
+
+
+
+from django.db.models import F
+from django.core.cache import cache
+
+class PhotoViewCountAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, photo_id, *args, **kwargs):
+        photo = get_object_or_404(Photo, id=photo_id)
+
+        if request.user.is_authenticated:
+            viewer_id = f"user:{request.user.id}"
+        else:
+            session_key = request.session.session_key
+            if not session_key:
+                request.session.create()
+                session_key = request.session.session_key
+            viewer_id = f"session:{session_key}"
+
+
+        # Cache key (30 min window)
+        cache_key = f"photo_viewed:{photo_id}:{viewer_id}"
+
+        if cache.add(cache_key, 1, timeout=60 * 30):
+            Photo.objects.filter(id=photo_id).update(
+                view_count=F("view_count") + 1
+            )
+
+            return Response({
+                "status": "counted",
+                "view_count_incremented": True
+            })
+
+        return Response({
+            "status": "ignored",
+            "view_count_incremented": False
+        })

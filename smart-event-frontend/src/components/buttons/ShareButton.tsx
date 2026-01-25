@@ -4,6 +4,7 @@ import type { Event } from '../../types/types'
 import ShareIcon from '@mui/icons-material/Share';
 import InsertLinkSharpIcon from '@mui/icons-material/InsertLinkSharp';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
+import { toast } from 'react-toastify';
 
 
 const ShareButton = ({event} : {event: Event}) => {
@@ -19,6 +20,7 @@ const ShareButton = ({event} : {event: Event}) => {
       handleonClose()
       const url =  window.location.href
       navigator.clipboard.writeText(url)
+      toast.success('Link Copied')
     }
 
     const handleQRCode = () => {

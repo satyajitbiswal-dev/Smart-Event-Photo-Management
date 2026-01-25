@@ -75,7 +75,7 @@ export const updateEvent = createAsyncThunk(
             const updatedEvent = await privateapi.patch(`event/${id}/update/`, data)
             return updatedEvent.data
         } catch (error: any) {
-            return rejectWithValue(error.response?.data || 'Update failed');
+            return rejectWithValue(error.response?.data || 'Something Went Wrong');
         }
     }
 )
@@ -135,3 +135,8 @@ export const eventSlice = createSlice({
 
 export default eventSlice.reducer
 export const {cleardispatchEvent}  = eventSlice.actions
+
+
+
+
+//Event Time bt and UI improve
