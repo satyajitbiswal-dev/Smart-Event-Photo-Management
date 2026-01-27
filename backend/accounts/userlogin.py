@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from django.middleware import csrf
 from rest_framework import exceptions
+from .utils import *
 
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]
@@ -96,15 +97,6 @@ class VerifyOTP(APIView):
             "role": user.role ,
         },status=status.HTTP_200_OK)
 
-        # response.set_cookie(
-        #     key=settings.SIMPLE_JWT['AUTH_COOKIE'],
-        #     value=str(refresh.access_token),
-        #     expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-        #     secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-        #     httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-        #     samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
-        # )
-
         response.set_cookie(
             key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
             value=str(refresh),
@@ -113,7 +105,6 @@ class VerifyOTP(APIView):
             httponly=True,
             samesite="None"
         )
-        # response["X-CSRFToken"] = csrf.get_token(request)
         return response
         
          
@@ -131,11 +122,7 @@ class LogoutView(APIView):
             res = Response(
                 {"message":"Logged Out Successfully"}
             )
-            # res.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
             res.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-            # res.delete_cookie("X-CSRFToken")
-            # res.delete_cookie("csrftoken")
-            # res["X-CSRFToken"]=None
 
             return res
     
@@ -144,80 +131,75 @@ class LogoutView(APIView):
 
 
 logout_view = LogoutView.as_view()
+class ResetPasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        password = request.data.get("password")
+        confirm_password = request.data.get("confirm_password")
+
+        if not password or not confirm_password:
+            return Response(
+                {"message": "Both fields are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if password != confirm_password:
+            return Response(
+                {"message": "Passwords do not match"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(password)
+        user.save()
+
+        return Response(
+            {"message": "Password reset successful"},
+            status=status.HTTP_200_OK
+        )
+
+# views.py
+ # your function
 
 
+class ForgotPasswordView(APIView):
+    authentication_classes = []
+    permission_classes = []
 
+    def post(self, request):
+        email = request.data.get("email")
 
-class OAuthLogin(APIView):
-    def channeliauthcallback(request):
-        # get authorization code 
-        code = request.GET['code']
+        if not email:
+            return Response(
+                {"message": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # get Access token and refresh token
-        token_uri = "https://oauth2.googleapis.com/token "
         try:
-            auth_response = requests.post(token_uri,
-                                          params = {
-                "client_id":  settings.OAUTH_CLIENT_ID,
-                'client_secret':settings.OAUTH_CLIENT_SECRET,
-                'grant_type':'authorization_code',
-                'redirect_uri':settings.OAUTH_REDIRECT_URI,
-                'code' :code
-            },
-            timeout=10)
-            auth_response.raise_for_status()
-            auth_response_json = auth_response.json()
-        except Timeout:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             return Response(
-                {"error": "OAuth provider timeout"},
-                status=504
+                {"message": "If this email exists, a password has been sent"},
+                status=status.HTTP_200_OK
             )
 
-        except RequestException as e:
-            return Response(
-                {"error": "OAuth request failed", "detail": str(e)},
-                status=502
-            )
-        if "error" in auth_response_json:
-            return Response(
-                {"error": auth_response_json.get("error")},
-                status=400
-            )
-        
-        access_token = auth_response_json.get('access_token')
-        refresh_token = auth_response_json.get('refresh_token')
-        if not access_token:
-            return Response(
-                {"error": "Access token missing in OAuth response"},
-                status=400
-            )
-        
-        #get user data
-        get_user_data_url = "https://www.googleapis.com/oauth2/v3/userinfo"
-        get_user_data = requests.get(get_user_data_url,headers={
-            "Authorization": f"Bearer {access_token}"
-        }).json()
+        # internal rule, but response same
+        if user.status != 'A':
+            return Response({
+                "message": "If this email exists, a password has been sent"
+                }, status=status.HTTP_200_OK )
 
-        if "error" in get_user_data:
-             return Response(
-                {"error": get_user_data.get("error")},
-                status=400
-            )
-        
-        # name = get_user_data.get("name")
-        # email = get_user_data.json().get("email")
 
-        #create a user if not created in database 
-        # user = User.objects.filter(email=email).first()
-        # if user is None:
-        #     user = User.objects.create_user(email=email,name=name)
+        new_password = passwordgenerator()
 
-        # #create a token and give it to user to use it in other apis
-        # token,created = Token.objects.get_or_create(user=user)
-        # return Response({
-        #     'message':'User registered via third party app',
-        #     'token':token.key
-        # })
+        user.set_password(new_password)
+        user.save()
 
-oauth_login_view = OAuthLogin.as_view()
+        # send email async
+        send_forgot_password_email.delay(email, new_password)
 
+        return Response(
+            {"message": "Password sent to your email"},
+            status=status.HTTP_200_OK
+        )

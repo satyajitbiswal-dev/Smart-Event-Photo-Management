@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { Badge, Divider, IconButton, Link, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
+import { Badge, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import { selectTopUnreadNotifications } from '../../app/notificationslice';
@@ -17,7 +17,6 @@ const Notification = () => {
         (e) => e.is_seen === false
     ))
     const toptemunread = useSelector(selectTopUnreadNotifications)
-
 
     const handleOpenNotifications = (e: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(e.currentTarget)

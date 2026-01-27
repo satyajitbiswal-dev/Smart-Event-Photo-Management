@@ -19,7 +19,6 @@ const DownloadButton = ({ photo_id, photo_name, event_name }: { photo_id?: strin
         setAnchorEl(null)
     }
     const handleSelectDownload = async (type: string) => {
-        console.log(photo_name, event_name);
         
         if(downloadStatus.find((e)=> e === type)){
             toast.info(`You have already downloaded ${type} image.`)
@@ -46,7 +45,6 @@ const DownloadButton = ({ photo_id, photo_name, event_name }: { photo_id?: strin
             toast.success("Download started!");
             setDownloadStatus((prev) => [...prev, type])
         } catch (error) {
-            console.log(error);
             toast.error('Something Went Wrong')
         }
         

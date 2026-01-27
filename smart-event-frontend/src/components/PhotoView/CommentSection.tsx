@@ -1,131 +1,182 @@
-import { Paper, Card, CardHeader, Typography, CardContent, CardActions, TextField, Stack, Button, IconButton, Divider, Box } from '@mui/material'
+import {
+  Box,
+  Card,
+  Divider,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import SendIcon from '@mui/icons-material/Send'
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../app/store'
-import SendIcon from '@mui/icons-material/Send';
-import { fetchCommentsByPhotoId, selectCommentsByPhotoId } from '../../app/commentslice';
-import { toast } from 'react-toastify';
-import CommentItem from './CommentItem';
+import {
+  fetchCommentsByPhotoId,
+  addComments,
+  removeComments,
+} from '../../app/commentslice'
+import type { Comment } from '../../types/types'
+import CommentItem  from './CommentItem'
 
-const CommentSection = ({photo_id}:{photo_id :string}) => {
-    const authuser = useSelector((state: RootState)=> state.auth.user)
-    const [input, setInput] = useState<string>()
-    const dispatch = useDispatch<AppDispatch>()
-    //fetch Comments for the photo
-    useEffect(() => {
-         if (!photo_id) return;
-        dispatch(fetchCommentsByPhotoId(photo_id))
-        
-    }, [dispatch, photo_id])
-    
-    const comments = useSelector(selectCommentsByPhotoId(photo_id));
-    console.log(comments);
-    
-    
+type ReplyState = {
+  parentId: string
+  username: string
+} | null
 
-    //Add Comment ---> Send button
+const CommentSection = ({ photo_id }: { photo_id: string }) => {
+  const dispatch = useDispatch<AppDispatch>()
+  const authuser = useSelector((state: RootState) => state.auth.user)
+  const { commentById, repliesByParent } = useSelector((state: RootState) => state.comment)
+  const rootCommentIds = useSelector((state: RootState) => state.comment.commentsByPhoto[photo_id] || [])
+
+  const [input, setInput] = useState('')
+  const [replyTo, setReplyTo] = useState<ReplyState>(null)
+
+  // Fetch comments
+  useEffect(() => {
+    if (!photo_id) return
+    dispatch(fetchCommentsByPhotoId(photo_id))
+  }, [dispatch, photo_id])
+
+  // Indent logic 
+  const getIndent = (comment: Comment) => {
+    if (!comment.parent_comment) return 0
+    return 1 // depth unlimited, indent only once
+  }
+
+  // 
+    const getParentUsername = (comment: Comment) => {
+    if (!comment.parent_comment) return undefined
+    return commentById[comment.parent_comment]?.user.username
+  }
+
+  const renderComment = (id: string) => {
+    const comment = commentById[id]
+    if (!comment) return null
+    return (
+      <Box key={id}>
+        <CommentItem
+          {...comment}
+          indent={getIndent(comment)}
+          parentUser={getParentUsername(comment)}
+          onReply={(cid, username) =>
+            setReplyTo({ parentId: cid, username })
+          }
+          onDelete={handleDelete}
+        />
+
+        {repliesByParent[id]?.map(childId =>
+          renderComment(childId)
+        )}
+      </Box>
+    )
+  }
 
 
-
-    //Remove Comment ---> delete
-
-  return (
-   <Card
-  sx={{
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRadius: 2,
-  }}
->
-  {/* Header */}
-  <Box sx={{ px: 2, py: 1.5 }}>
-    <Typography variant="subtitle1" fontWeight={600}>
-      Comments
-    </Typography>
-  </Box>
-
-  <Divider />
-
-  {/* Scrollable Comments */}
-  <Box
-    sx={{
-      flex: 1,
-      overflowY: 'auto',
-      px: 2,
-      py: 1.5,
-    }}
-  >
-    {
-        comments.length > 0 && 
-        comments.map((commentProp) => {
-            const {id , ...comment} = commentProp
-            return(
-            <CommentItem key={id} {...commentProp} />
-        )})
+  const handleDelete = async (commentId: string) => {
+    try {
+      await dispatch(removeComments({ photo_id, comment_id: commentId, })).unwrap()
+       if (replyTo?.parentId === commentId) {
+      setReplyTo(null)
     }
-    {/* Render comments here */}
-  </Box>
+    } catch (error) {
+      console.error('Failed to delete comment', error)
+    }
+  }
 
-  <Divider />
+  // Send comment
+  const handleSend = () => {
+    if (!input.trim()) return
+    dispatch(
+      addComments({photo_id,data: { 
+         body: input,
+         parent_comment: replyTo?.parentId ?? null,
+        },
+      })
+    )
+    setInput('')
+    setReplyTo(null)
+  }
 
-  {/* Input */}
-  {authuser?.role !== 'P' && (
-    <Box
-      sx={{
-        px: 2,
-        py: 1.5,
-        position: 'sticky',
-        bottom: 0,
-        backgroundColor: 'background.paper',
+return (
+    <Card sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2,
       }}
     >
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField
-          size="small"
-          fullWidth
-          placeholder="Add a comment…"
+      {/* Header */}
+      <Box px={2} py={1.5}>
+        <Typography variant="subtitle1" fontWeight={600}>
+          Comments
+        </Typography>
+      </Box>
+
+      <Divider />
+
+      {/* Comment list */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          px: 2,
+          py: 1,
+        }}
+      >
+        {rootCommentIds.map(id => renderComment(id))}
+      </Box>
+
+      <Divider />
+
+      {/* Input */}
+      {authuser?.role !== 'P' && (
+        <Box
           sx={{
-            backgroundColor: 'rgb(245,245,245)',
-            borderRadius: 2,
-          }}
-        />
-        <IconButton
-          color="primary"
-          sx={{
-            borderRadius: 2,
-            backgroundColor: 'primary.main',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-            },
+            px: 2,
+            py: 1.5,
+            position: 'sticky',
+            bottom: 0,
+            backgroundColor: 'background.paper',
           }}
         >
-          <SendIcon fontSize="small" />
-        </IconButton>
-      </Stack>
-    </Box>
-  )}
-</Card>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TextField
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              size="small"
+              fullWidth
+              placeholder={
+                replyTo
+                  ? `Replying to @${replyTo.username}`
+                  : 'Add a comment…'
+              }
+              sx={{
+                backgroundColor: 'rgb(245,245,245)',
+                borderRadius: 2,
+              }}
+            />
 
+            <IconButton
+              color="primary"
+              onClick={handleSend}
+              sx={{
+                borderRadius: 2,
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              }}
+            >
+              <SendIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        </Box>
+      )}
+    </Card>
   )
 }
 
 export default CommentSection
-
-
-
-/* 
-
-Some UI rule for comment section :-
-1. If Parent comment is null( while fetching or while adding a new ) direct add to the comment section
-2. Every Comment item has some more features 
-  --> Comment message ()  
-  --> Comment delete option
-  --> reply button
---> profile ppipc first upar username , niche comment and right most side delete and reply button at bottom
-
-3. When Someone reply then @username (reply)
-  If @username is null indent to comment otherwise 1 indent only 
-
-*/

@@ -30,7 +30,6 @@ class CustomUserManager(UserManager):
         base_username = (data.get("name") or email.split("@")[0]).replace(" ", "").lower()
         username = generate_unique_username(base_username)
 
-
         extra_fields.setdefault('is_staff',False)
         extra_fields.setdefault('is_superuser',False)
         extra_fields.setdefault('is_active',True)
@@ -39,7 +38,7 @@ class CustomUserManager(UserManager):
                           department = department,role = role,
                           **extra_fields)
         
-        if role == ('M' or 'A') and password is not None:
+        if role in ('M', 'A') and password is not None:
             user.set_password(password)
         else:
             user.set_unusable_password() 

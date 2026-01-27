@@ -25,6 +25,7 @@ def passwordgenerator():
     chars = string.ascii_letters+string.digits+allowed_special
     return ''.join(secrets.choice(chars) for _ in range(8))
 
+
 def verify_otp(email,otp):
     if cache.get(email) == int(otp):
         cache.delete(email)

@@ -23,9 +23,10 @@ class LikeAdd(APIView):
                 {"message": "Already liked"},
                 status=400
             )
-        # print(user,photo)
+        like_count = Like.objects.filter(photo=photo).count()
         return Response({
-            "message":"You Liked the photo"
+            "message": "You liked the photo",
+            "like_count":like_count
         })
 
 add_like = LikeAdd.as_view()
@@ -36,8 +37,11 @@ class RemoveLike(APIView):
         photo = get_object_or_404(Photo,photo_id=photo_id) 
         user = self.request.user
         Like.objects.filter(user=user,photo=photo).delete()
+        like_count = Like.objects.filter(photo=photo).count()
+
         return Response({
-            "message":"Like Removed"
+            "message":"Like Removed",
+            "like_count":like_count
         })
 
 remove_like = RemoveLike.as_view()

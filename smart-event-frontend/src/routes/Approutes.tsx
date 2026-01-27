@@ -20,6 +20,9 @@ import { lazy, Suspense } from "react";
 import PhotoView from "../pages/Photo/PhotoView";
 // import PhotoDashboardDesktop from "../pages/Profile/Photographer";
 import UploadPhoto from "../components/RBAC/Photographer/UploadPhoto";
+import PhotographerDashboard from "../pages/Profile/Photographer";
+import OAuthCallback from "../pages/OAuthCallback";
+import Rejected from "../pages/Rejected";
 
 const EventGallery = lazy(() => import("../pages/Photo/EventGallery"));
 const NotificationPage = lazy(() => import("../pages/NotificationPage"))
@@ -28,11 +31,12 @@ const NotificationPage = lazy(() => import("../pages/NotificationPage"))
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
+      <>
     <Route path="/" element={<Home />} errorElement={<NotFound />}>
       <Route element={<PersistLogin />}>
         <Route index element={
           <Protected authentication>
-            <PhotoList />
+            <About/>
           </Protected>
         }
         />
@@ -43,7 +47,9 @@ export const router = createBrowserRouter(
           </Protected>
         }
         />
-
+      <Route path="accounts/channeli/callback/" element={<Protected authentication={false}>
+          <OAuthCallback />
+      </Protected>} />
         <Route path="signup" element={
           <Protected authentication={false}>
             <SignUp />
@@ -51,6 +57,14 @@ export const router = createBrowserRouter(
         }
         />
 
+  <Route
+    path="/rejected"
+    element={
+      <Protected authentication={false}>
+        <Rejected />
+      </Protected>
+    }
+  />
         <Route path="signup/confirmation" element={
           <Protected authentication={false}>
             <ConfirmationPage />
@@ -83,9 +97,15 @@ export const router = createBrowserRouter(
           </Protected>
         } />
 
-        <Route path="event/:event_id/" element={
+        <Route path="events/:event_id/" element={
           <Protected authentication  >
               <EventCoordinatorPanel />
+          </Protected>
+        } />
+
+        <Route path="photographer/dashboard/" element={
+          <Protected authentication  >
+              <PhotographerDashboard />
           </Protected>
         } />
 
@@ -101,20 +121,26 @@ export const router = createBrowserRouter(
           </Protected>
         } />
         
-        <Route path="event/" element={
+        <Route path="events/" element={
           <Protected authentication >
             <Event />
           </Protected>
         } />
           
-        <Route path="event/:event_id/photos/" element={
+        <Route path="events/:event_id/photos/" element={
           <Protected authentication  >
             <Suspense fallback={<p>loading...</p>}>
               <EventGallery viewMode={'view'}/>
             </Suspense>
           </Protected>
         } />
-     
+     <Route path="photos/:photo_id/" element={
+          <Protected authentication  >
+            {/* <Suspense fallback={<p>loading...</p>}> */}
+              <PhotoView />
+            {/* </Suspense> */}
+          </Protected>
+        } />
 
         <Route path="favourites/" element={
           <Protected authentication allowedRole={['A', 'M']} >
@@ -128,14 +154,6 @@ export const router = createBrowserRouter(
         } />
 
 
-        <Route path="photos/:photo_id/" element={
-          <Protected authentication  >
-            {/* <Suspense fallback={<p>loading...</p>}> */}
-              <PhotoView />
-            {/* </Suspense> */}
-          </Protected>
-        } />
-
         <Route path="notifications/" element={
           <Protected authentication allowedRole={['A', 'M']} >
             <NotificationPage />
@@ -145,6 +163,8 @@ export const router = createBrowserRouter(
 
       </Route>
     </Route>
+        
+    </>
 
   )
 )

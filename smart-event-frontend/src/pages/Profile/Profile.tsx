@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Avatar, Box, Button, ButtonGroup, FormControl, FormControlLabel, FormLabel, Grid, MenuItem, Paper, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, ButtonGroup, FormControl, FormControlLabel, FormLabel, Grid, MenuItem, Paper, Radio, RadioGroup, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import privateapi from '../../services/AxiosService';
 import type { MemberProfile, Event } from '../../types/types';
 import { useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import ResetPasswordDialog from '../../features/auth/ResetPassword';
 
 const Member = () => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { username } = useParams()
 
   const [isEditable, setisEditable] = useState<boolean>(false)
@@ -134,15 +138,21 @@ const Member = () => {
     reader.readAsDataURL(file);
   }
   
+  const [passwordDialog,setPasswordDialog] = useState<boolean>(false)
+  const handlePasswordReset = () => {
+    setPasswordDialog(true)
+  }
+
   return (
     <Box maxWidth={1100} mx="auto" mt={6} px={2} >
       <Paper elevation={3} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Stack spacing={1.5}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Profile
               </Typography>
+        <Grid container spacing={3} alignItems="center"  direction={isMobile ? 'column-reverse' : 'row'} >
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Stack spacing={1.5}>
+              
 
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -352,13 +362,16 @@ const Member = () => {
         
        { authuser?.username === username && 
        <>
-        <Stack mt={3} direction="row" alignItems={"center"} spacing={1}>
-          <Typography variant="h6" color="text.secondary" component={"span"}>
+        <Stack mt={3} direction={{ xs: "column", sm: "row" }}
+alignItems={{ xs: "stretch", sm: "center" }} spacing={1}>
+          {!isMobile && <Typography variant="h6" color="text.secondary" component={"span"}>
             Coordinated Events :
-          </Typography>
-          <Box width={400}>
-            <TextField select value={selectedCoordinatedEvent}
-            onChange={(e) => setSelectedCoordinatedEvent(e.target.value)} size='small' fullWidth>
+          </Typography>}
+          <Box sx={{ width: { xs: "100%", sm: 400 } }}>
+            <TextField select value={selectedCoordinatedEvent} label='Coordinated-Events'
+            onChange={(e) => setSelectedCoordinatedEvent(e.target.value)} size='small' fullWidth 
+            sx={{ overflowX:'clip' }}
+            >
               <MenuItem value="">Select an Event</MenuItem>
             {
               coordinatedEvents.map((event) => (
@@ -367,22 +380,25 @@ const Member = () => {
                 </MenuItem>
               ))
             }
+            
           </TextField>
           </Box>
           
           <Button
               variant='contained'
               disabled = {selectedCoordinatedEvent == "" ? true : false}
-              onClick={() => { navigate(`/event/${selectedCoordinatedEvent}`) }}>
+              onClick={() => { navigate(`/events/${selectedCoordinatedEvent}`) }}>
               Go
             </Button>
         </Stack>
         <Box mt={3}>
-          <Stack mt={3} direction="row" alignItems={"center"} spacing={1}>
-          <Typography variant="h6" color="text.secondary" component={"span"}>
+          <Stack mt={3} direction={{ xs: "column", sm: "row" }}
+alignItems={{ xs: "stretch", sm: "center" }} spacing={1}>
+          {!isMobile && <Typography variant="h6" color="text.secondary" component={"span"}>
             PhotoGrapher Dashboard :
-          </Typography>
-          <Box width={400}>
+          </Typography>}
+          <Box sx={{ width: { xs: "100%", sm: 400 } }}
+>
             <TextField select value={selectedPhotographedEvent}
             onChange={(e) => setSelectedPhotographedEvent(e.target.value)} size='small' fullWidth>
               <MenuItem value="">Select an Event</MenuItem>
@@ -405,7 +421,14 @@ const Member = () => {
         </Stack>
         </Box>
         {/* ACTIONS */}
-        <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+        <Box  mt={4} display="flex" justifyContent="space-between" alignItems={'center'} >
+            <Button variant='contained' size='small' onClick={handlePasswordReset} >
+              Reset Password
+            </Button>
+             <ResetPasswordDialog 
+          open={passwordDialog}
+          onClose={() => setPasswordDialog(false)}
+           />
           <ButtonGroup>
             <Button variant={isEditable ? "outlined" : "contained"} onClick={handleProfileUpdate}>
               {isEditable ? "Cancel" : "Edit Profile"}

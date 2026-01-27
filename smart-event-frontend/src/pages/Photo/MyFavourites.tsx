@@ -13,7 +13,7 @@ const MyFavourites = () => {
         title = {"Your Favourite Photos"}
         subtitle={"These are your Favourite Photos"}
         mode={"favourites"}
-        event={null}
+        viewMode='view'
         />
       </Suspense>
   )

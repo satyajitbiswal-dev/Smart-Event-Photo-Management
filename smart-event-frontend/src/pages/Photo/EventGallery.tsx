@@ -27,6 +27,7 @@ const EventGallery = ({viewMode}:{viewMode: 'bulk' | 'view'} ) => {
     mode={"event"}
     event={newevent}
     viewMode = {viewMode}
+    event_id={newevent.id}
     />
     </Suspense>
   )

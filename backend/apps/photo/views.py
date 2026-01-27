@@ -17,10 +17,38 @@ from collections import defaultdict
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+
 class PhotoPagination(PageNumberPagination):
     page_size = 24
-    page_size_query_param = 'page_size'
-    max_page_size = 50
+
+    def paginate_queryset(self, queryset, request, view=None):
+        try:
+            return super().paginate_queryset(queryset, request, view)
+        except NotFound:
+            # page out of range → return empty list
+            self.page = None
+            return []
+
+    def get_paginated_response(self, data):
+        if self.page is None:
+            # out-of-range page
+            return Response({
+                "count": 0,
+                "next": None,
+                "previous": None,
+                "results": [],
+            })
+
+        # NORMAL DRF PAGINATION
+        return Response({
+            "count": self.page.paginator.count,
+            "next": self.get_next_link(),
+            "previous": self.get_previous_link(),
+            "results": data,
+        })
 
 # Create your views here.
 class PhotoUploadView(generics.GenericAPIView):
@@ -145,7 +173,8 @@ class PhotoRetrieveView(generics.RetrieveAPIView):
     lookup_field = 'photo_id'
     serializer_class = PhotoSerializer
     def get_queryset(self): #queryset mil gaya
-        if self.request.user.role == 'P':
+        user = self.request.user
+        if not user.is_authenticated or getattr(user, "role", None) == 'P':
             return Photo.objects.filter(is_private=False)
         return Photo.objects.all()
 
@@ -163,8 +192,8 @@ class PhotoListView(generics.ListAPIView):
         user = self.request.user
 
         #  Context scoping
-        if params.get("event_id"):
-            qs = qs.filter(event=params.get("event_id"))
+        if event_id := params.get("event_id"):
+            qs = qs.filter(event_id=event_id)
 
         if params.get("favorites") == "true" and user.is_authenticated:
             qs = qs.filter(is_favourite_of=user)
@@ -176,13 +205,13 @@ class PhotoListView(generics.ListAPIView):
         qs = PhotoFilter(self.request.GET, queryset=qs).qs
 
         # Search
-        search_query = params.get("search")
-        if search_query:
+        if search_query :=params.get("search"):
             qs = search(search_query, qs)
 
         #  Privacy
-        if user.is_anonymous or user.role == 'P':
+        if not user.is_authenticated or getattr(user, "role", None) == 'P':
             qs = qs.filter(is_private=False)
+
 
         return qs
 
@@ -192,7 +221,7 @@ photo_list_view = PhotoListView.as_view()
 
 
 class DownloadAPIView(APIView):
-    def post(self,request,photo_id,*args,**kwargs):
+    def get(self,request,photo_id,*args,**kwargs):
         #public not allowed
         if not request.user.is_authenticated or request.user.role == "P":
             raise PermissionDenied("Only Members can Download Photos")

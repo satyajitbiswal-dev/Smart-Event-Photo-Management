@@ -8,11 +8,12 @@ import { useDispatch, useSelector } from "react-redux"
 import type { AppDispatch } from "../app/store"
 import { useEffect } from "react"
 import { fetchNotifications } from "../app/notificationslice"
-import { selectIsAuthenticated } from "../app/authslice"
+import { selectIsAuthenticated, selectIsGuest } from "../app/authslice"
 
 const Home = () => {
     const dispatch = useDispatch<AppDispatch>()
     const isAuthenticated = useSelector(selectIsAuthenticated)
+    const isGuest = useSelector(selectIsGuest)
     useEffect(()=>{
       if(isAuthenticated){
         dispatch(fetchNotifications())
@@ -37,7 +38,7 @@ const Home = () => {
         transition={Slide}
       />
       <AppInitX />
-      <Navbar />
+       {(isGuest || isAuthenticated) &&  <Navbar /> }
       <Outlet />
     </>
   )

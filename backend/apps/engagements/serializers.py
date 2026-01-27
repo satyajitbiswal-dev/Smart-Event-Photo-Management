@@ -21,7 +21,6 @@ class CommentActionSerializer(serializers.ModelSerializer):
         return value    
     
 class CommentSerializer(serializers.ModelSerializer):
-    parent_comment = serializers.SlugRelatedField(slug_field='username',read_only=True)
     user = PhotoTaggedUsers(read_only=True)
     class Meta:
         model = Comment

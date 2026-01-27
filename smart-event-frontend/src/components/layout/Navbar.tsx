@@ -14,12 +14,8 @@ const pages = [{
   'route':'/'
 },
 {
-  'name':'About',
-  'route':'/about'
-},
-{
   'name':'Events',
-  'route':'/event'
+  'route':'/events'
 },
 {
   'name':'Favourites',
@@ -64,7 +60,7 @@ const Navbar = () => {
     <AppBar position="sticky" elevation={1} sx={{maxHeight:64}}>
       <Container maxWidth="xl" >
         <Toolbar disableGutters>
-          {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
+
           <Typography
             variant="h6"
             noWrap
@@ -120,7 +116,6 @@ const Navbar = () => {
               
             </Menu>
           </Box>
-          {/* <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} /> */}
           <Typography
             variant="h5"
             noWrap
@@ -132,7 +127,6 @@ const Navbar = () => {
               flexGrow: 1,
               fontFamily: 'monospace',
               fontWeight: 700,
-            //   letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
             }}
@@ -181,10 +175,10 @@ const Navbar = () => {
                 navigate('/admin')}} >
                 Admin Panel
               </MenuItem>}
-              <MenuItem key={"Personal Gallery"} 
+              <MenuItem key={"Your Dashboard"} 
                 onClick={()=>{handleCloseUserMenu(); 
-                navigate('profile/personalgallery/')}}
-            >Personal Gallery</MenuItem>
+                navigate('photographer/dashboard/')}}
+            >Your Dashboard</MenuItem>
               <Divider/>
               <MenuItem key="logout" onClick={()=>{
                 handleCloseUserMenu()

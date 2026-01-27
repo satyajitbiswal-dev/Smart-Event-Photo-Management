@@ -19,6 +19,7 @@ type props = {
 
 // Bulk Update Photo  
 const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelection, event_id }: props) => {
+    const authUser = useSelector((state: RootState) => state.auth.user)
     const eventlist = useSelector((state: RootState) => state.event.events)
     const userlist = useSelector((state: RootState) => state.user.userlist)
     const dispatch = useDispatch<AppDispatch>()
@@ -27,26 +28,12 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
         if (userlist.length === 0) dispatch(fetchUsers())
     }, [eventlist, dispatch, userlist])
 
-
-
-
-
     const [taggedUsers, setTaggedUsers] = useState<User[]>([])
     const handleUserListOnChange = (event: React.SyntheticEvent, newValue: User[]) => {
         setTaggedUsers(newValue)
     }
 
     const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null)
-    // useEffect(() => {
-    //     if (eventlist.length === 0) return;
-
-    //     const currentEvent = eventlist.find(item => item.id === event_id)
-    //     // eslint-disable-next-line react-hooks/set-state-in-effect
-    //     setSelectedEvent(currentEvent ?? null)
-    // }, [eventlist, event_id])
-
-
-
     const [tag, setTag] = useState<string[]>([]);
     const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const str = e.target.value
@@ -58,19 +45,6 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
     const handlePrivacyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPrivacy((event.target as HTMLInputElement).value);
     };
-
-    //In case of single photo get all the previous data values
-    // const selectedPhoto = useSelector((state:RootState)=>state.photo.photosById[photo_ids[0]])
-    // useEffect(() => {
-    //   if(photo_ids.length === 1){
-    //     // eslint-disable-next-line react-hooks/set-state-in-effect
-    //     // setTaggedUsers(selectedPhoto.tagged_user)
-    //     // eslint-disable-next-line react-hooks/set-state-in-effect
-    //     setTag(selectedPhoto?.tag)
-    //     setPrivacy(selectedPhoto?.is_private ? 'Private' : 'Public')
-    //   }
-    // }, [photo_ids.length, selectedPhoto])
-    
     
     const resetState = () => {
         setPrivacy('as_previous')
@@ -133,7 +107,7 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
                         disablePortal fullWidth
                         value={selectedEvent}
                         onChange={(_, newValue: AppEvent | null) => setSelectedEvent(newValue)}
-                        options={eventlist ?? []}
+                        options={eventlist.filter((e) => e.event_photographer === authUser?.email) ?? []}
                         getOptionLabel={(option) => option.event_name}
                         renderOption={(props, option) => {
                             const { key, ...restprops } = props;
@@ -217,7 +191,6 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleUpdate} >Update</Button>
-                <Button>Cancel</Button>
             </DialogActions>
         </Dialog>
     )

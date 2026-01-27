@@ -52,3 +52,39 @@ def send_password(email,password,username):
     message=f"For Login your username is {username} and password is {password}.You can Change it later after joining.\nWelcome aboard!\n\nBest Regards,\nSmart Event Team"
     from_email=settings.EMAIL_HOST_USER
     send_mail(subject,message,from_email,[email])
+
+@shared_task
+def send_forgot_password_email(email, password):
+    send_mail(
+        subject="Your New Password",
+        message=f"""
+            Your password has been reset.
+
+            New Password: {password}
+
+            Please login and change your password immediately.
+        """,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+
+
+@shared_task
+def send_confirmation_message_admin_oauth(email,approval_token_id):
+    from .models import User, Token
+    admin = User.objects.filter(role = 'A', is_active=True).first()
+    approval_token = Token.objects.get(id=approval_token_id)
+    user = approval_token.user
+    context = {
+        "approve_url" : f"http://localhost:8000/api/oauth/admin/approve?token={approval_token.token}",
+        "reject_url" : f"http://localhost:8000/api/admin/approve?token={approval_token.token}",
+        "user_email" : user.email,
+        "user_name" : user.name, 
+    }
+    subject = 'New User wants to register in Smart Event Photo Management Platform'
+    html_message = render_to_string('accounts/mail_template.html', context=context)
+    plain_message = strip_tags(html_message)
+    from_email = settings.EMAIL_HOST_USER
+    send_mail(subject, plain_message, from_email, [admin.email], html_message=html_message)

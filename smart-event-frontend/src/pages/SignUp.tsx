@@ -1,13 +1,16 @@
 import * as React from 'react';
-import { Box, Button, Card, CssBaseline, FormControl, FormLabel, TextField, Typography, Stack } from '@mui/material';
+import { Box, Button, Card, CssBaseline, FormControl, FormLabel, TextField, Typography, Stack, InputAdornment, IconButton } from '@mui/material';
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { publicapi } from '../services/AxiosService';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 export default function SignUp() {
   const [errors, setErrors] = useState({ username: '', email: '', password: '', fullname: '' });
   const [userError, setUserError] = useState('')
+  const[showPassword, setShowPassword] = useState<boolean>(false)
   const navigate = useNavigate();
 
   const validate = (username: string, email: string, password: string, fullname: string) => {
@@ -126,11 +129,20 @@ export default function SignUp() {
               <FormLabel>Password</FormLabel>
               <TextField
                 name="password"
-                type="password"
+                type={ showPassword ? 'text' : 'password' }
                 placeholder="••••••••"
                 error={!!errors.password}
                 helperText={errors.password}
                 required
+                slotProps={{input:{
+                  endAdornment : (
+                    <InputAdornment position='end'>
+                      <IconButton edge='end' onClick={() => setShowPassword(!showPassword) } >
+                          { showPassword ? <VisibilityOffIcon /> : <VisibilityIcon /> }
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}}
               />
             </FormControl>
 

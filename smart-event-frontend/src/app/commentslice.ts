@@ -5,12 +5,14 @@ import type { RootState } from "./store";
 
 type CommentState = {
     commentById: Record<string, Comment>;
-    commentsByPhoto: Record<string, string[]>;
-}
+    commentsByPhoto: Record<string, string[]>;   // root ids
+    repliesByParent: Record<string, string[]>;   
+};
 
 const initialState: CommentState = {
     commentById: {},
-    commentsByPhoto: {}
+    commentsByPhoto: {},
+    repliesByParent: {}
 }
 
 
@@ -19,7 +21,7 @@ export const fetchCommentsByPhotoId = createAsyncThunk(
     async (photo_id: string, { rejectWithValue }) => {
         try {
             const response = await privateapi.get(`photo/${photo_id}/comments/`)
-             return { photo_id, comments: response.data };
+            return { photo_id, comments: response.data };
         } catch (error) {
             return rejectWithValue(error?.response?.data || "Comments can't be fetched")
         }
@@ -45,7 +47,7 @@ export const removeComments = createAsyncThunk(
     'comment/removeComments',
     async ({ photo_id, comment_id }: { photo_id: string; comment_id: string }, { rejectWithValue }) => {
         try {
-            const response = await privateapi.delete(`photo/${photo_id}/remove_comment/`,{ data: {comment_id} })
+            const response = await privateapi.delete(`photo/${photo_id}/remove_comment/`, { data: { comment_id } })
             return response.data
         } catch (error) {
             return rejectWithValue(error?.response?.data || "Comments can't be fetched")
@@ -53,10 +55,11 @@ export const removeComments = createAsyncThunk(
     }
 )
 
-export const selectCommentsByPhotoId =(photo_id: string) =>
-  (state: RootState) => { const ids = state.comment.commentsByPhoto[photo_id] || [];
-    return ids.map(id => state.comment.commentById[id]);
-  };
+export const selectCommentsByPhotoId = (photo_id: string) =>
+    (state: RootState) => {
+        const ids = state.comment.commentsByPhoto[photo_id] || [];
+        return ids.map(id => state.comment.commentById[id]);
+    };
 
 
 
@@ -65,35 +68,62 @@ const commentSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(fetchCommentsByPhotoId.fulfilled, (state, action) => { //action.payload ---> array of Comments for a photo
-            const {photo_id, comments} = action.payload
-             if (!state.commentsByPhoto[photo_id]) {
-                    state.commentsByPhoto[photo_id] = []; 
-            }
+        builder.addCase(fetchCommentsByPhotoId.fulfilled, (state, action) => {
+            const { photo_id, comments } = action.payload;
+
+            state.commentsByPhoto[photo_id] = [];
+
             comments.forEach(comment => {
-                state.commentsByPhoto[photo_id].unshift(comment.id)
-                state.commentById[comment.id] = comment  
+                state.commentById[comment.id] = comment;
+
+                if (!comment.parent_comment) {
+                    state.commentsByPhoto[photo_id].push(comment.id);
+                } else {
+                    if (!state.repliesByParent[comment.parent_comment]) {
+                        state.repliesByParent[comment.parent_comment] = [];
+                    }
+                    state.repliesByParent[comment.parent_comment].push(comment.id);
+                }
             });
-            
-        })
+        });
+
         builder.addCase(addComments.fulfilled, (state, action) => {
-            const photo_id = action.payload.photo
-            const id = action.payload.id
-            state.commentById[id] = action.payload
-            if (!state.commentsByPhoto[photo_id]) {
-                state.commentsByPhoto[photo_id] = [];
+            const comment = action.payload;
+            const photo_id = comment.photo;
+
+            state.commentById[comment.id] = comment;
+
+            if (!comment.parent_comment) {
+                state.commentsByPhoto[photo_id].unshift(comment.id);
+            } else {
+                if (!state.repliesByParent[comment.parent_comment]) {
+                    state.repliesByParent[comment.parent_comment] = [];
+                }
+                state.repliesByParent[comment.parent_comment].unshift(comment.id);
             }
+        });
 
-            state.commentsByPhoto[photo_id].unshift(id);
-
-        })
         builder.addCase(removeComments.fulfilled, (state, action) => {
             const { id, photo_id } = action.payload
-            delete state.commentById[id];
 
-            state.commentsByPhoto[photo_id] =
-                state.commentsByPhoto[photo_id]?.filter(id => id !== id);
+            delete state.commentById[id]
+
+            // remove from root list
+            if (state.commentsByPhoto[photo_id]) {
+                state.commentsByPhoto[photo_id] =
+                    state.commentsByPhoto[photo_id].filter(cid => cid !== id)
+            }
+
+            // remove from replies
+            Object.keys(state.repliesByParent).forEach(parentId => {
+                state.repliesByParent[parentId] =
+                    state.repliesByParent[parentId].filter(cid => cid !== id)
+            })
+
+            // remove subtree
+            delete state.repliesByParent[id]
         })
+
     }
 })
 

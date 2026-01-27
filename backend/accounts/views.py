@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from .models import *
 from .tasks import *
 from django.db.models import Q
+from .utils import *
 
 # Create your views here.
 class HomeView(APIView):
@@ -35,15 +36,7 @@ class UserProfileAPIView(generics.RetrieveAPIView):
     lookup_field = 'username'
     permission_classes = [AllowAny]
     def get_serializer_class(self, *args, **kwargs):
-        if self.request.user.role == 'P':
-            return PublicUserSerializer
         return UserSerializer
-    
-    # def get_object(self):
-    #     obj = super().get_object()
-    #     if obj != self.request.user:
-    #        raise PermissionDenied("You cannot view other user's profile")
-    #     return obj
 
 
 profile_view = UserProfileAPIView.as_view()
@@ -75,11 +68,6 @@ class ProfilePicUpdateView(generics.UpdateAPIView):
            raise PermissionDenied("You cannot view other user's profile")
         return obj
 
-
-
-    
-
-
 class ApproveUser(APIView):
     permission_classes = [AllowAny]
     def get(self,request,*args,**kwargs):
@@ -100,6 +88,7 @@ class ApproveUser(APIView):
         return Response({"message": "User approved successfully"})
     
 approve_user = ApproveUser.as_view()
+
 class RejectUser(APIView):
     def get(self,request,*args,**kwargs):
         token = request.GET.get("token")
@@ -119,9 +108,6 @@ class RejectUser(APIView):
         return Response({"message": "User rejected"})
 
 reject_user = RejectUser.as_view()
-
-
-
 
 class MeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -149,3 +135,43 @@ class ProfilePicView(generics.RetrieveAPIView):
         if obj != self.request.user:
            raise PermissionDenied("You cannot view other user's profile")
         return obj
+
+
+class ApproveOAuthUser(APIView):
+    permission_classes = [AllowAny]  # OK only if token is STRONG
+
+    def get(self, request, *args, **kwargs):
+        token = request.GET.get("token")
+
+        if not token:
+            return Response({"message": "Token missing"}, status=400)
+
+        token_obj = get_object_or_404(Token, token=token)
+
+        if not token_obj.is_valid():
+            return Response(
+                {"message": "Token invalid or expired"},
+                status=400
+            )
+
+        user = token_obj.user
+
+        user.status = "A"
+        user.role = "M"
+
+        password = passwordgenerator()
+        user.set_password(password)
+
+        user.save()
+
+        token_obj.is_used = True
+        token_obj.save(update_fields=["is_used"])
+
+        send_password.delay(email=user.email,username=user.username,password=password)
+
+        return Response(
+            {"message": "User approved successfully"},
+            status=200
+        )
+
+

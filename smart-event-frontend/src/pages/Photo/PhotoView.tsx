@@ -1,265 +1,269 @@
-import { Accordion, AccordionDetails, AccordionSummary, Avatar, AvatarGroup, Box, Button, Dialog, DialogContent, DialogTitle, Divider, Grid, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material'
-import { useEffect, useState } from 'react'
-import CloseIcon from '@mui/icons-material/Close';
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import DownloadButton from '../../components/buttons/DownloadButton'
-import { useDispatch, useSelector } from 'react-redux';
-import type { AppDispatch, RootState } from '../../app/store';
-import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
-import { BookmarkBorder, Bookmark, Favorite, FavoriteBorder,  ShareOutlined, ExpandMore } from '@mui/icons-material';
-import { addFavouritesAPI, addLikeAPI, addtoFavourites, clearPhotoId, fetchPhotoDetails, photoLiked, removeFavouritesAPI, removeFromFavourites, removeLikeAPI } from '../../app/photoslice';
-import type { PhotoEXIF } from '../../types/types';
-import PhotoEXIFData from '../../components/PhotoView/EXIFData';
-import { toast } from 'react-toastify';
-import CommentSection from '../../components/PhotoView/CommentSection';
-import { fetchEvents } from '../../app/eventslice';
-import { fetchUsers } from '../../app/userslice';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Box, Button, Dialog, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
+import { useEffect, useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
+import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+
+import type { RootState, AppDispatch } from "../../app/store";
+import { fetchPhotoDetails, addLikeAPI, removeLikeAPI, photoLiked, addFavouritesAPI, removeFavouritesAPI, addtoFavourites, removeFromFavourites, } from "../../app/photoslice";
+import { fetchEvents } from "../../app/eventslice";
+import { fetchUsers } from "../../app/userslice";
+
+import DownloadButton from "../../components/buttons/DownloadButton";
+import CommentSection from "../../components/PhotoView/CommentSection";
+import PhotoINFO from "../../components/PhotoView/PhotoINFO";
+import PhotoActions from "../../components/PhotoView/PhotoActions";
+import PhotoTopBar from "../../components/PhotoView/PhotoTopBar";
+import { selectIsAuthenticated } from "../../app/authslice";
 
 const PhotoView = () => {
-    const { photo_id } = useParams()
-    const navigate = useNavigate()
-    const authuser = useSelector((state: RootState) => state.auth.user)
-    const [open, setOpen] = useState<boolean>(false)
-    const handleClose = () => {
-        setOpen(false)
-    }
-    const photo = useSelector((state: RootState) => photo_id ? state.photo.photosById[photo_id] : null)
-    const dispatch = useDispatch<AppDispatch>()
+    const { photo_id } = useParams();
+
+    const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+    /* state */
+    const authuser = useSelector((s: RootState) => s.auth.user);
+    const isAuthenticated = useSelector(selectIsAuthenticated)
+    const photo = useSelector((s: RootState) => photo_id ? s.photo.photosById[photo_id] : null);
+    const events = useSelector((s: RootState) => s.event.events);
+    const users = useSelector((s: RootState) => s.user.userbyEmails);
+
+    const [favourite, setFavourite] = useState(false);
+
+    /* fetch data */
     useEffect(() => {
         if (!photo_id) return;
-        if (!photo) {
-            dispatch(fetchPhotoDetails(photo_id))
-            console.log(photo);
-        }
-        return () => {
-            dispatch(clearPhotoId())
-        }
-    }, [photo_id, photo, dispatch])
 
-    const userlist = useSelector((state: RootState) => {
-        if (!photo) return [];
-        return state.user.userlist
-    });
+        if (!photo || !photo.hasFullDetails) dispatch(fetchPhotoDetails(photo_id));
+        if (events.length === 0) dispatch(fetchEvents());
+        dispatch(fetchUsers());
 
-    const allevents = useSelector((state:RootState)=>state.event.events)
+    }, [photo_id]);
 
-    useEffect(()=>{
-        if(allevents.length === 0 ) dispatch(fetchEvents())
-        if(userlist.length === 0) dispatch(fetchUsers())
-    },[userlist,allevents,dispatch])
+    /* derive data  */
+    const selectedEvent = events.find((e) => e.id === photo?.event);
 
-    const taggedUsers = useSelector((state: RootState) => {
-        if (!photo) return [];
-        return photo?.tagged_user.map(email => state.user.userbyEmails[email]).filter(Boolean);
-    });
+    const taggedUsers =
+        (photo?.tagged_user ?? [])
+            .map((email) => users[email])
+            .filter(Boolean);
 
-    const selectedEvent = allevents.find((e) => e.id === photo?.event)
 
-    const [like, setLike] = useState<boolean>(false);
-    const [favourite, setFavourite] = useState<boolean>(false)
+    const photographer =
+        selectedEvent?.event_photographer &&
+            users[selectedEvent.event_photographer]
+            ? users[selectedEvent.event_photographer].username
+            : "";
+
+    /*  sync like/fav  */
     useEffect(() => {
-        if (photo?.liked_users.find((e) => e === authuser?.email)) {
+        if (!photo || !authuser?.email) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLike(true)
-        }
-        if (photo?.is_favourite_of.find((e) => e === authuser?.email)) {
-            setFavourite(true)
-        }
-    }, [authuser, photo])
-    const ToggleLike = () => {
-        if (!photo_id) return
-        if (like) {
-            removeLikeAPI(photo_id)
-        } else {
-            addLikeAPI(photo_id)
-        }
-        dispatch(photoLiked(photo_id))
-        setLike(!like)
-        console.log('liked');
-    }
-    const ToggleFavourite = () => {
-        if (!photo_id) return
-        if (favourite) {
-            dispatch(removeFromFavourites(photo_id))
-            removeFavouritesAPI(photo_id)
-        } else {
-            dispatch(addtoFavourites(photo_id))
-            addFavouritesAPI(photo_id)
+            setFavourite(false);
+            return;
         }
 
-        setFavourite(!favourite)
-        console.log('added to favourites');
-    }
+        const favUsers = photo.is_favourite_of ?? [];
+        setFavourite(favUsers.includes(authuser.email));
+        
+    }, [photo, authuser]);
+
+
+    /*  handlers */
+    const like = !!authuser?.email && !!photo && Array.isArray(photo.liked_users) &&
+        photo.liked_users.includes(authuser.email);
+
+
+    const handleLike = async () => {
+        if (!photo_id || !authuser) return;
+
+        const res = like
+            ? await removeLikeAPI(photo_id)
+            : await addLikeAPI(photo_id);
+        console.log('res', res);
+
+
+        dispatch(photoLiked({
+            photo_id,
+            like_count: res.data.like_count,
+            user_email: authuser.email,
+            actionType: like ? "remove" : "add",
+        }));
+    };
+
+
+
+
+    const handleFavourite = async () => {
+        if (!photo_id || !authuser) return;
+
+        try {
+            if (favourite) {
+                await removeFavouritesAPI(photo_id);
+                dispatch(removeFromFavourites(photo_id));
+            } else {
+                await addFavouritesAPI(photo_id);
+                dispatch(addtoFavourites(photo_id));
+            }
+            setFavourite(!favourite);
+        } catch {
+            toast.error("Failed to update favourite");
+        }
+    };
+
+
     const handleShare = () => {
-        const url = window.location.href
-        navigator.clipboard.writeText(url);
-        toast.success('Copied Link !!!')
-    }
+        navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied!");
+    };
 
-    const photoEventDetails = {
-        Event: selectedEvent?.event_name,
-        Date: selectedEvent?.event_date
-    }
 
-    const hasAnyEXIFData = (exif?: PhotoEXIF) => {
-        if (!exif) return false;
-        return Object.values(exif).some(x => x !== null && x !== '' && x !== undefined)
-    }
+    if (!photo || !photo?.hasFullDetails) return null;
+
 
     return (
-        <>
-            <Dialog open={open} fullWidth maxWidth={'xl'} >
-                {/* Header */}
-                {/* <PhotoHeader/> */}
+        <Dialog open fullScreen={isMobile} maxWidth="xl" fullWidth>
+            {/* desktop   */}
+            {!isMobile && (
                 <DialogTitle>
-                    <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Box>
-                            <Button startIcon={<KeyboardBackspaceIcon />} onClick={() => (navigate('/events/', { replace: true }))} color='inherit' variant='contained'>{photo?.event?.event_name}</Button>
-                        </Box>
-                        <Box display={'flex'} gap={1}>
-                            {authuser?.role != 'P' && <DownloadButton photo_id={photo_id} photo_name={photo?.image_url} event_name={photo?.event?.event_name ?? ''} />}
-                            <IconButton onClick={handleClose} sx={{
-                                borderRadius: 1,
-                                width: 40,
-                                height: 40,
-                            }} color='inherit'  >
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Button
+                            startIcon={<KeyboardBackspaceIcon />}
+                            onClick={() => navigate(`/events/${selectedEvent?.id}/photos/`)}
+                        >
+                            {selectedEvent?.event_name}
+                        </Button>
+
+                        <Box display="flex" gap={1}>
+                            {authuser?.role !== "P" && (
+                                <DownloadButton
+                                    photo_id={photo_id}
+                                    photo_name={photo.image_url}
+                                    event_name={selectedEvent?.event_name ?? ""}
+                                />
+                            )}
+                            <IconButton onClick={() => navigate(-1)}>
                                 <CloseIcon />
                             </IconButton>
                         </Box>
                     </Box>
                 </DialogTitle>
-                <DialogContent dividers sx={{ xs: '60vh', md: '80vh' }}>
-                    <Grid container>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                            <Box
-                                sx={{
-                                    height: { xs: '60vh', md: '70vh' },
-                                    overflow: 'hidden',
-                                    borderRadius: 2,
+            )}
+
+            {/*  CONTENT  */}
+            <DialogContent sx={{ p: 0, overflow: "hidden", height: isMobile ? "100%" : '100vh', }}>
+                <Grid container sx={{ height: "100%" }}>
+                    {/*  PHOTO */}
+                    <Grid size={{ xs: 12, md: 8 }}
+                        sx={{
+                            height: "100%",
+                            position: "relative",
+                            bgcolor: "black",
+                            display: "flex",
+                            flexDirection: "column",
+                        }}
+                    >
+                        {/* MOBILE TOP BAR */}
+                        {isMobile && (
+                            <PhotoTopBar
+                                onBack={() => navigate(-1)}
+                                photo={photo}
+                                selectedEvent={selectedEvent}
+                                taggedUsers={taggedUsers}
+                                photographer={photographer}
+                            />
+                        )}
+
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
+                            }}
+                        >
+                            <img
+                                src={photo.image_url}
+                                alt={photo.photo_id}
+                                style={{
+                                    maxWidth: "100%",
+                                    maxHeight: "100%",
+                                    objectFit: "contain",
+                                    // display: "block",
+                                    pointerEvents: "none",
                                 }}
-                            >
-                                <img
-                                    src={photo?.image_url}
-                                    alt={photo?.photo_id}
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'contain',
-                                        display: 'block',
-                                    }}
+                            />
+                        </Box>
+
+                        {/* ACTIONS */}
+                        {!isMobile && (
+
+                            <PhotoActions
+                                like={like}
+                                favourite={favourite}
+                                likeCount={photo.like_count}
+                                onLike={handleLike}
+                                onFavourite={handleFavourite}
+                                onShare={handleShare}
+                                isAuthenticated={isAuthenticated}
+                            />
+
+                        )}
+
+                        {isMobile && (
+                            <Box position="absolute" bottom={12} width="100%">
+                                <PhotoActions
+                                    variant="mobile"
+                                    like={like}
+                                    favourite={favourite}
+                                    onLike={handleLike}
+                                    onFavourite={handleFavourite}
+                                    onShare={handleShare}
+                                    isAuthenticated={isAuthenticated}
                                 />
                             </Box>
-                            <Box display={'flex'} gap={0.2} justifyContent={'center'}>
-                                {/* Like */}
-                                <IconButton onClick={ToggleLike} sx={{ borderRadius: 1 }}>
-                                    <Stack alignItems={'center'} >
-                                        {like ? <Favorite /> : <FavoriteBorder />}
-                                        <Typography>{photo?.like_count}</Typography>
-                                    </Stack>
-                                </IconButton>
-                                <IconButton onClick={ToggleFavourite} sx={{ borderRadius: 1 }}>
-                                    <Stack alignItems={'center'} >
-                                        {favourite ? <Bookmark /> : <BookmarkBorder />}
-                                        <Typography>Favourite</Typography>
-                                    </Stack>
-                                </IconButton>
-                                <IconButton onClick={handleShare} sx={{ borderRadius: 1 }}>
-                                    <Stack alignItems={'center'} >
-                                        <ShareOutlined />
-                                        <Typography>Share</Typography>
-                                    </Stack>
-                                </IconButton>
+                        )}
+                    </Grid>
 
+                    {/*  INFO + COMMENTS (DESKTOP ONLY)  */}
+                    {!isMobile && (
+                        <Grid size={{ md: 4 }}
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                height: "100%",
+                            }}
+                        >
+                            {/* INFO */}
+                            <Box p={2}>
+                                <PhotoINFO
+                                    photo={photo}
+                                    selectedEvent={selectedEvent}
+                                    taggedUsers={taggedUsers}
+                                    photographer={photographer}
+                                />
+                            </Box>
+
+                            {/* COMMENTS */}
+                            <Box sx={{ flex: 1, overflowY: "auto" }}>
+                                <CommentSection photo_id={photo_id!} />
                             </Box>
                         </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <Paper elevation={3} sx={{
-                                p: { xs: 1, md: 2.5 }, borderRadius: { xs: 2, md: 3 },
-                                background: "linear-gradient(135deg, #ffffff, #f1f5f9)",
-                            }}>
-                                <Stack direction="row" spacing={1} alignItems="center" mb={0.5} textAlign={'center'}>
-                                    <Typography variant="subtitle1" color="text.primary"> Photographer:</Typography>
-                                    <Link to={`/profile/${selectedEvent?.event_photographer}`} style={{ textDecoration: 'None' }}> {selectedEvent?.event_photographer} </Link>
-                                </Stack>
-                                <Divider />
-                                {Object.entries(photoEventDetails).map(([label, value]) =>
-                                    value ? (
-                                        <Box key={label}>
-                                            <Stack direction="row" spacing={1} alignItems="center" my={0.5}>
-                                                <Typography variant="body2" color="text.secondary"> {label}:</Typography>
-                                                <Typography variant="body2"> {value} </Typography>
-                                            </Stack>
-                                            <Divider />
-                                        </Box>
-                                    ) : null
-                                )}
-                                <Stack direction="row" spacing={1} alignItems="center" my={1} textAlign={'center'}>
-                                    <Typography sx={{fontWeight:600}}>Tags:</Typography>
-                                    {
-                                        photo?.tag && photo?.tag.length > 0 ?
-                                            photo.tag.map((e) => (
-                                                <Typography key={e} color='primary' onClick={()=> window.open(`https://www.google.com/search?q=${encodeURIComponent(e)}&tbm=isch`,'_blank')}  sx={{
-                                                    backgroundColor:'rgb(239, 239, 239)',
-                                                    borderRadius:0.5,
-                                                    mr:0.5, px:0.5,
-                                                    '&:hover': {
-                                                        cursor:'pointer'
-                                                    }
-                                                }}
-                                                > #{e} </Typography>
-                                            )) : <Typography>No Tags Available</Typography>
-                                    }
-                                </Stack>
-                                {/* INFO page and People Tagged Accordion */}
-                                <Accordion defaultExpanded >
-                                    <AccordionSummary aria-controls="panel1d-content" id="panel1d-header" expandIcon={<ExpandMore />} >
-                                        <Typography component="span" color='inherit'>INFO</Typography>
-                                    </AccordionSummary>
-                                    <Divider />
-                                    <AccordionDetails>
-                                        {
-                                            hasAnyEXIFData(photo?.exifData) ? <PhotoEXIFData exif={photo?.exifData} /> :
-                                                <Typography variant='subtitle2' color='text.secondary'> No EXIF Data exists for this Photo </Typography>
-                                        }
-                                    </AccordionDetails>
-                                </Accordion>
-                                <Accordion defaultExpanded >
-                                    <AccordionSummary aria-controls="panel2d-content" id="panel2d-header" expandIcon={<ExpandMore />}>
-                                        <Typography component="span">People Tagged</Typography>
-                                    </AccordionSummary>
-                                    <Divider />
-                                    <AccordionDetails sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                        <AvatarGroup>
-                                            {photo?.tagged_user && photo?.tagged_user.length > 0 ?
-                                                taggedUsers.map((user) => (
-                                                    <Tooltip key={user.username} title={user.username}>
-                                                        <Avatar alt={user.username} src={user.profile_pic}
-                                                            sx={{
-                                                                transition: '0.20s',
-                                                                '&:hover': {
-                                                                    cursor: 'pointer',
-                                                                    transform: "translateY(-1px)",
-                                                                }
-                                                            }}
-                                                            onClick={() => navigate(`/profile/${user.username}`)}
-                                                        />
-                                                    </Tooltip>
+                    )}
+                </Grid>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
-                                                )) : <Typography>No one Tagged</Typography>
-                                            }
-                                        </AvatarGroup>
-                                    </AccordionDetails>
-                                </Accordion>
-                                {/* Comment Section */}
-                                {photo_id && <CommentSection photo_id={photo_id} />}
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                </DialogContent>
-            </Dialog >
-            <Button onClick={() => setOpen(!open)} variant='contained'>Open dialog box</Button>
-        </>
-    )
-}
-
-export default PhotoView
+export default PhotoView;

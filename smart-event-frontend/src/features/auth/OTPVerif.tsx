@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { Box, Button, Typography, Paper } from "@mui/material";
 import { MuiOtpInput } from "mui-one-time-password-input";
 import axios from "axios";
@@ -6,10 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login, setPersist } from "../../app/authslice";
 import type { RootState } from "../../app/store";
+import { publicapi } from "../../services/AxiosService";
 
 const OTP_LENGTH = 6;
+const OTP_EXPIRY = 60
 
-export const OTPVerif = ({ email }) => {
+export const OTPVerif = ({ email, password }) => {
   const navigate = useNavigate()
   const [value, setValue] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false)
@@ -34,14 +36,9 @@ export const OTPVerif = ({ email }) => {
       )
       dispatch(login(response.data))
       dispatch(setPersist(true))
-      // console.log(response.data)
+      setLoading(false)
 
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.log('Axios error:', error.response);
-      } else {
-        console.log('Unexpected error:', error);
-      }
       setError('Incorrect OTP');
       setLoading(false)
       setValue("")
@@ -57,12 +54,47 @@ export const OTPVerif = ({ email }) => {
     }
   }, [accessToken, navigate]);
 
+
+  // OTP TimeOut
+  const [resend, setResend] = useState<boolean>(false)
+  const [timer, setTimer] = useState<number>(OTP_EXPIRY)
+
+  useEffect(() => {
+    if (timer === 0) {
+      setResend(true)
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimer(prev => (prev > 0 ? prev - 1 : 0))
+    }, 1000);
+
+    return () => clearInterval(interval)
+  }, [timer])
+
+  const handleResendOTP = async () => {
+    try {
+      setLoading(false);
+      await publicapi.post('login/send-otp/', {
+        email: email,
+        password: password
+      },
+        { withCredentials: true }
+      );
+      setTimer(OTP_EXPIRY);
+      setResend(false);
+      setValue("");
+      setError("");
+    } catch {
+      setError("Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
-
-      <Box
-        component={Paper}
-        elevation={0}
+      <Box component={Paper} elevation={0}
         sx={{
           mt: 2,
           p: 2,
@@ -97,11 +129,7 @@ export const OTPVerif = ({ email }) => {
           }}
         />
 
-        <Button
-          variant="contained"
-          size="large"
-          fullWidth
-          disabled={value.length !== OTP_LENGTH || loading}
+        <Button variant="contained" size="large" fullWidth disabled={value.length !== OTP_LENGTH || loading}
           onClick={handleverifyOTP}
           sx={{
             mt: 1,
@@ -114,15 +142,21 @@ export const OTPVerif = ({ email }) => {
         </Button>
 
         {error && (
-          <Typography
-            color="error"
-            variant="body2"
-            textAlign="center"
-            sx={{ mt: 0.5 }}
-          >
+          <Typography color="error" variant="body2" textAlign="center" sx={{ mt: 0.5 }}>
             {error}
           </Typography>
         )}
+        {!resend ?
+          (<Typography color="blue" > Resend OTP in {timer}s </Typography>)
+          :
+          (<Button sx={{
+            backgroundColor: 'rgb(114, 251, 167)',
+            color: 'white'
+          }}
+            variant='contained'
+            onClick={handleResendOTP}
+          > Resend OTP </Button>)
+        }
       </Box>
 
     </>
@@ -130,4 +164,4 @@ export const OTPVerif = ({ email }) => {
 };
 
 
-//Timer and Resend button
+

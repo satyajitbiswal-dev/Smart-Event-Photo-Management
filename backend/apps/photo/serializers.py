@@ -126,7 +126,7 @@ class PhotoSerializer(serializers.ModelSerializer):
             return None
         user = request.user
         #If the person is public
-        if getattr(user, "role",None) == "P" :
+        if not user.is_authenticated or getattr(user, "role",None) == "P" :
             return request.build_absolute_uri(obj.watermarked_image.url)
         
         #if the person is present in event

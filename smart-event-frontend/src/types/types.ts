@@ -31,6 +31,8 @@ export interface Photo {
   is_favourite_of: string[];
   event: string | null;
   like_count: number;
+
+  hasFullDetails?: boolean;
 }
 
 
@@ -80,11 +82,36 @@ export interface Notification {
   event_id?: string;
 }
 
+type PhotoCommentUser = {
+  email?: string;
+  username?: string;
+  profile_pic?: string;
+}
+
 export type Comment = {
   id: string,
   photo: string,
-  parent_comment: string,
-  user: PhotoTaggedUser,
+  parent_comment: string, //parent comment ka id
+  user: PhotoCommentUser,
   body: string,
   created: string
 }
+
+// Gallery type 
+type BaseGalleryType = {
+  title: string;
+  subtitle: string;
+  viewMode: 'view' | 'bulk'
+}
+
+type EventGallery = BaseGalleryType & {
+  mode: 'event';
+  event: Event;
+}
+
+type PersonalGallery = BaseGalleryType & {
+  mode: 'favourites' | 'tagged';
+  event?: undefined
+}
+
+export type Gallery = EventGallery | PersonalGallery

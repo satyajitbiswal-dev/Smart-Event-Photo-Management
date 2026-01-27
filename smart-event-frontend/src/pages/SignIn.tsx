@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, Card, CssBaseline, FormControl, FormLabel, TextField, Typography, Stack, Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { Box, Button, Card, CssBaseline, FormControl, FormLabel, TextField, Typography, Stack, Dialog, DialogContent, DialogTitle, InputAdornment, IconButton } from '@mui/material';
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,16 @@ import { publicapi } from '../services/AxiosService';
 import { OTPVerif } from '../features/auth/OTPVerif';
 import { useDispatch } from 'react-redux';
 import { guest } from '../app/authslice';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ForgotPassword from '../features/auth/ForgotPassword';
+import CloseIcon from "@mui/icons-material/Close";
+
+const OMNIPORT_LOGIN_URL = `
+https://channeli.in/oauth/authorise/
+?client_id=6bugbw6qVuKIos4sPnIPM5FlrFZLb1IBZ9sAYBTC
+&redirect_uri=http://localhost:5173/accounts/channeli/callback/
+`;
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -15,6 +25,13 @@ export default function SignIn() {
   const [userError, setUserError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [email, setEmail] = useState<string>("")
+  const [password, setPassword] = useState<string>('')
+  const [forgotDialog, setForgotDialog] = useState<boolean>(false)
+
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const handleOAuthLogin = () => {
+    window.location.href = OMNIPORT_LOGIN_URL;
+  };
   const dispatch = useDispatch()
 
   const handleClose = () => {
@@ -55,11 +72,11 @@ export default function SignIn() {
         email: email,
         password: password
       },
-      {withCredentials:true}
-    );
-      console.log(response);
+        { withCredentials: true }
+      );
       setDialogOpen(true);
       setEmail(email)
+      setPassword(password)
       // Handle successful login, e.g., store token, redirect, etc.
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -69,14 +86,13 @@ export default function SignIn() {
           setUserError("Invalid Email or Password");
         }
       } else {
-        console.log('Unexpected error:', error);
         setUserError("Invalid Email or Password");
       }
     }
 
   };
 
-  const handleGuest = async () =>{
+  const handleGuest = async () => {
     dispatch(guest());
     navigate("/")
   }
@@ -112,11 +128,22 @@ export default function SignIn() {
               <FormLabel>Password</FormLabel>
               <TextField
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 error={!!passwordError}
                 helperText={passwordError}
                 placeholder="••••••••"
                 required
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <IconButton edge='end' onClick={() => setShowPassword(!showPassword)} >
+                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }
+                }}
               />
             </FormControl>
             {userError && (
@@ -128,24 +155,54 @@ export default function SignIn() {
               Sign In
             </Button>
           </Box>
-          <Box mt={2} textAlign="center">
+          <Button size="small" onClick={() => setForgotDialog(true)}>
+            Forgot Password?
+          </Button>
+          <ForgotPassword
+            open={forgotDialog}
+            onClose={() => setForgotDialog(false)}
+          />
+          <Box mt={1} textAlign="center">
             Don't have an account? <Button onClick={() => navigate('/signup')}>Sign Up</Button>
           </Box>
-          <Button variant="outlined" fullWidth sx={{  mt: 1,
-              textTransform: "none",
-              fontWeight: 500,
-              borderRadius: 2,
-            }}
+          <Button variant="outlined" fullWidth sx={{
+            mt: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            borderRadius: 2,
+          }}
             onClick={handleGuest}
             value="Guest"
-            name = "Guest"
+            name="Guest"
           >
             Continue as Guest
           </Button>
-          <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
-            <DialogTitle>Enter the OTP for Verification</DialogTitle>
+          <Button onClick={handleOAuthLogin} sx={{
+            mt: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            borderRadius: 2,
+          }}>
+            Login with Omniport
+          </Button>
+
+          <Dialog open={dialogOpen} maxWidth="xs" fullWidth>
+            <DialogTitle>
+              <Typography> Enter the OTP for Verification </Typography>
+              <IconButton
+                onClick={handleClose}
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  color: "text.secondary",
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
             <DialogContent>
-              <OTPVerif email={email} />
+              <OTPVerif email={email} password={password} />
             </DialogContent>
           </Dialog>
         </Card>

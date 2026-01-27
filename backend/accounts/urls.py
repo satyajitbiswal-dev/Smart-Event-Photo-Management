@@ -3,13 +3,12 @@ from .views import *
 from .userlogin import *
 from .userapi import *
 from apps.event.views import UserEventActivity
+from .OAuthLogin import *
 
 urlpatterns = [
     path('', home_view),
     path("auth/me/", MeAPIView.as_view()),
     path('register/',UserRegisterView.as_view()),
-    # path('accounts/channeli/callback/', userlogin.oauth_login_view),
-    path('google/callback/', oauth_login_view),
     path('users/', ListMembers.as_view()),
     path('profile/<str:username>/', profile_view),
     path('update/<str:username>/', UserProfileUpdateView.as_view()),
@@ -24,4 +23,8 @@ urlpatterns = [
     path("api/admin/reject", reject_user),
     path('event_activity/' ,UserEventActivity.as_view()),
     path('<str:username>/profile_pic/', ProfilePicView.as_view()),
+    path('reset-password/', ResetPasswordView.as_view()),
+    path("forgot-password/", ForgotPasswordView.as_view()),
+    path("auth/oauth/login/", OAuthLogin.as_view()),
+    path("api/oauth/admin/approve/", ApproveOAuthUser.as_view(), name="approve-oauth-user")
 ]

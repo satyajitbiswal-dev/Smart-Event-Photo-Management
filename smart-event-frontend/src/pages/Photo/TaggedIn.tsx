@@ -13,7 +13,7 @@ const Tagged = () => {
         title = {"You are Tagged In in these Photos"}
         subtitle={"These are your tagged In Photos"}
         mode={"tagged"}
-        event={null}
+        viewMode='view'
         />
       </Suspense>
   )
