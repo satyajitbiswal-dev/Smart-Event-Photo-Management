@@ -59,8 +59,8 @@ export default function SignUp() {
           password: password,
           name: fullname
         })
-        console.log(response)
-        navigate('confirmation',{replace: true});
+        // console.log(response)
+        navigate('confirmation/',{replace: true});
       }
       catch (error) {
         if (axios.isAxiosError(error)) {

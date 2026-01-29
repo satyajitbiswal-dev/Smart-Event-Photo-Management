@@ -11,6 +11,7 @@ class EventSerializer(serializers.ModelSerializer):
     event_coordinator = serializers.SlugRelatedField(slug_field = 'email',queryset = User.objects.all())
     event_photographer = serializers.SlugRelatedField(slug_field = 'email',queryset = User.objects.all())
     event_members = serializers.SlugRelatedField(many=True,slug_field = 'email',queryset = User.objects.all(),required=False)
+    event_time = serializers.TimeField(format="%H:%M", input_formats=["%H:%M"],required=False,allow_null=True,)
     class Meta:
         model = Event
         fields = '__all__'

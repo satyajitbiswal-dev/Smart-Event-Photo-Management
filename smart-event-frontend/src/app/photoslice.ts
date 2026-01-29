@@ -90,7 +90,7 @@ export const fetchPhotoDetails = createAsyncThunk(
     'photos/fetchPhotoDetails',
     async (photo_id: string, { rejectWithValue, dispatch }) => {
         try {
-            const response = await publicapi.get(`photos/${photo_id}/`)
+            const response = await privateapi.get(`photos/${photo_id}/`)
             const taggedUsers = response.data.tagged_user
             dispatch(upsertUsers(taggedUsers));
             return {
@@ -243,8 +243,23 @@ export const updatePhotos = createAsyncThunk(
     }
 )
 
-
 //update photo(single)
+
+export const photoSingleUpdate = createAsyncThunk(
+    'photo/singleUpdate',
+    async ({ photo_id, data }: { photo_id: string, data: Partial<Photo> }, { rejectWithValue }) => {
+        try {
+            const response = await privateapi.patch(`photos/update_photo/${photo_id}/`, data)
+            return {
+                photo_id: photo_id,
+                data: response.data
+            }
+        } catch (error) {
+            return rejectWithValue(error?.response.data || 'Something Went Wrong')
+        }
+    }
+)
+
 
 //Favourites
 // add
@@ -362,45 +377,38 @@ const photoSlice = createSlice({
             }
         },
 
-    //Favourites
-    addtoFavourites: (state, action) => {
-        state.photoIdsByContext.favourites.unshift(action.payload) //statring me append
-    },
-    removeFromFavourites: (state, action) => {
-        state.photoIdsByContext.favourites =
-            state.photoIdsByContext.favourites.filter((e) => e !== action.payload)
-    },
+        //Favourites
+        addtoFavourites: (state, action) => {
+            state.photoIdsByContext.favourites.unshift(action.payload) //statring me append
+        },
+        removeFromFavourites: (state, action) => {
+            state.photoIdsByContext.favourites =
+                state.photoIdsByContext.favourites.filter((e) => e !== action.payload)
+        },
 
-    //Likes
-    photoLiked: (state, action) => {
-        const { photo_id, like_count, user_email, actionType } = action.payload;
+        //Likes
+        photoLiked: (state, action) => {
+            const { photo_id, like_count, user_email, actionType } = action.payload;
 
-        const photo = state.photosById[photo_id];
-        if (!photo) return;
+            const photo = state.photosById[photo_id];
+            if (!photo) return;
 
-        photo.like_count = like_count;
+            photo.like_count = like_count;
 
-        if (actionType === "add") {
-            if (!photo.liked_users.includes(user_email)) {
-                photo.liked_users.push(user_email);
+            if (actionType === "add") {
+                if (!photo.liked_users.includes(user_email)) {
+                    photo.liked_users.push(user_email);
+                }
+            } else {
+                photo.liked_users = photo.liked_users.filter(
+                    e => e !== user_email
+                );
             }
-        } else {
-            photo.liked_users = photo.liked_users.filter(
-                e => e !== user_email
-            );
         }
-    }
-
-
-
-    //CommentAdded
-
-
-},
-
+    },
     extraReducers: (builder) => {
         builder
-            /* FETCH GALLERY */
+            // gallery
 
             .addCase(fetchGalleryPhotos.pending, (state, action) => {
                 const { context, event_id } = action.meta.arg;
@@ -421,7 +429,6 @@ const photoSlice = createSlice({
 
             .addCase(fetchGalleryPhotos.fulfilled, (state, action) => {
                 const { context, event_id, results, hasMore } = action.payload;
-
                 if (results.length === 0) {
                     if (context === 'event') {
                         state.pagination.event[event_id!].hasMore = false;
@@ -433,11 +440,8 @@ const photoSlice = createSlice({
                     }
                     return;
                 }
-
                 /*  decide target ids array  */
-                 console.log(hasMore, context);
                 let targetIds: string[];
-
                 if (context === 'event') {
                     if (!state.photoIdsByContext.event[event_id!]) {
                         state.photoIdsByContext.event[event_id!] = [];
@@ -451,7 +455,7 @@ const photoSlice = createSlice({
                 results.forEach((photo) => {
                     const id = photo.photo_id;
 
-                    // ONE source of truth
+                    // ons source of truth
                     state.photosById[id] = photo;
 
                     // avoid duplicates
@@ -485,21 +489,16 @@ const photoSlice = createSlice({
                 }
             });
 
-        
-
         builder.addCase(fetchPhotoDetails.fulfilled, (state, action) => {
             const p = action.payload;
 
             state.photosById[p.photo_id] = {
-                ...state.photosById[p.photo_id], // merge with partial (gallery)
-                ...p,
-
+                ...state.photosById[p.photo_id], ...p,
                 liked_users: p.liked_users ?? [],
                 is_favourite_of: p.is_favourite_of ?? [],
                 tagged_user: p.tagged_user ?? [],
                 tag: p.tag ?? [],
                 exifData: p.exifData ?? {},
-
                 hasFullDetails: true,
             };
 
@@ -545,6 +544,34 @@ const photoSlice = createSlice({
                 }
             }
         });
+        builder.addCase(photoSingleUpdate.fulfilled, (state, action) => {
+            const photo_id = action.payload.photo_id
+            const data = action.payload.data
+            const photo = state.photosById[photo_id]
+            if (data.tags) {
+                photo.tag = data.tags ?? []
+            }
+            if (data.tagged_user) {
+                photo.tagged_user = data.tagged_user
+            }
+            if (data.is_private !== undefined) {
+                photo.is_private = data.is_private;
+            }
+
+            if (data.event && data.event !== photo.event) {
+                const oldEvent = photo.event;
+                const newEvent = data.event;
+                if (oldEvent) {
+                    state.photoIdsByContext.event[oldEvent] =
+                        state.photoIdsByContext.event[oldEvent]?.filter(pid => pid !== photo_id) ?? [];
+                }
+                if (!state.photoIdsByContext.event[newEvent]) {
+                    state.photoIdsByContext.event[newEvent] = [];
+                }
+                state.photoIdsByContext.event[newEvent].push(photo_id);
+                photo.event = newEvent;
+            }
+        })
         builder.addCase(deletePhotos.fulfilled, (state, action) => {
             const { photo_ids, event_id } = action.payload;
 
@@ -567,7 +594,7 @@ const photoSlice = createSlice({
                     state.photoIdsByContext.tagged.filter(pid => pid !== id);
             });
 
-            /* 🔥 IMPORTANT: pagination sanity */
+            // pagination
             if (event_id) {
                 const idsLeft = state.photoIdsByContext.event[event_id]?.length ?? 0;
                 const pagination = state.pagination.event[event_id];

@@ -3,7 +3,7 @@ import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, To
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, setPersist } from '../../app/authslice';
+import { logout, selectIsAuthenticated, setPersist } from '../../app/authslice';
 import { LogoutOutlined } from '@mui/icons-material';
 import ProfilePic from '../../features/auth/ProfilePic';
 import type { RootState } from '../../app/store';
@@ -16,17 +16,18 @@ const pages = [{
 {
   'name':'Events',
   'route':'/events'
-},
-{
-  'name':'Favourites',
-  'route':'/favourites'
-},
-{
-  'name':'Tagged',
-  'route':'/tagged'
 }
 ];
 
+const privatepages = [{
+  'name':'Favourites',
+  'route':'favourites/'
+},
+{
+  'name':'Tagged',
+  'route':'/tagged/'
+}
+];
 
 const Navbar = () => {
   const authuser = useSelector((state:RootState) => state.auth.user)
@@ -35,6 +36,7 @@ const Navbar = () => {
 
   const navigate = useNavigate()
   const authUser = useSelector((state: RootState) => state.auth.user)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -113,6 +115,13 @@ const Navbar = () => {
                   <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
                 </MenuItem>
               ))}
+              {(isAuthenticated || authUser?.role !=='P' ) && privatepages.map((page) => (
+                <MenuItem key={page.name} onClick={()=>{handleCloseNavMenu(); 
+                  navigate(`${page.route}`)
+                }}>
+                  <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
+                </MenuItem>
+              ))}
               
             </Menu>
           </Box>
@@ -143,9 +152,16 @@ const Navbar = () => {
                 {page.name}
               </Button>
             ))}
+            {(isAuthenticated || authUser?.role !=='P' ) && privatepages.map((page) => (
+                <MenuItem key={page.name} onClick={()=>{handleCloseNavMenu(); 
+                  navigate(`${page.route}`)
+                }}>
+                  <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
+                </MenuItem>
+              ))}
           </Box>
           <Box sx={{ flexGrow: 0 }}>
-            <Notification/>
+            { (isAuthenticated || authUser?.role !== 'P') && <Notification/>}
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                 <ProfilePic/>
@@ -167,19 +183,24 @@ const Navbar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              <MenuItem key="Profile" onClick={()=>{handleCloseUserMenu();
+              { (isAuthenticated || authUser?.role !== 'P') ?
+                <MenuItem key="Profile" onClick={()=>{handleCloseUserMenu();
                 navigate(`/profile/${authUser?.username}/`)}}>
                 Profile
+              </MenuItem> : <MenuItem key="Guset">
+                Guestuser
               </MenuItem>
+              }
              {authUser?.role === 'A' && <MenuItem key="Admin" onClick={()=>{handleCloseUserMenu();
                 navigate('/admin')}} >
                 Admin Panel
               </MenuItem>}
-              <MenuItem key={"Your Dashboard"} 
+              { (isAuthenticated || authUser?.role !== 'P') && <MenuItem key={"Your Dashboard"} 
                 onClick={()=>{handleCloseUserMenu(); 
                 navigate('photographer/dashboard/')}}
             >Your Dashboard</MenuItem>
-              <Divider/>
+          }
+          <Divider/>
               <MenuItem key="logout" onClick={()=>{
                 handleCloseUserMenu()
                 handleLogout()

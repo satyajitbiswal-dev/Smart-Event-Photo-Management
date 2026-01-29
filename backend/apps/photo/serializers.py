@@ -154,11 +154,6 @@ class PhotoListSerializer(serializers.ModelSerializer):
             "thumbnail",
         ]
 
-
-
-from rest_framework import serializers
-
-
 class DashboardSummarySerializer(serializers.Serializer):
     total_events = serializers.IntegerField()
     total_photos = serializers.IntegerField()
@@ -166,7 +161,6 @@ class DashboardSummarySerializer(serializers.Serializer):
     total_likes = serializers.IntegerField()
     total_comments = serializers.IntegerField()
     total_downloads = serializers.IntegerField()
-
 
 class DashboardEventSerializer(serializers.Serializer):
     event = PhotoEventSerializer()
@@ -177,10 +171,14 @@ class DashboardEventSerializer(serializers.Serializer):
     comment_count = serializers.IntegerField()
     download_count = serializers.IntegerField()
 
-
 class PhotographerDashboardSerializer(serializers.Serializer):
     summary = DashboardSummarySerializer()
     events = DashboardEventSerializer(many=True)
 
 
-    
+class PhotoUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = [
+            'photo_id','event' ,'tagged_user', 'tag', 'is_private'
+        ]

@@ -77,5 +77,3 @@ const Notification = () => {
 }
 
 export default Notification
-
-{/* <Link href="#" underline="none"> View More </Link> */ }

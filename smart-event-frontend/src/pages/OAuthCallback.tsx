@@ -28,7 +28,7 @@ const OAuthCallback = () => {
         const msg = err.response?.data?.message;
 
         if (msg?.includes("pending")) {
-          navigate("/signup/confirmation/");
+          navigate("/signup/confirmation/", {replace: true});
         } else if (msg?.includes("rejected")) {
           navigate("/rejected/");
         } else {

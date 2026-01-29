@@ -16,7 +16,7 @@ type props = {
     onClearSelection: () => void,
     event_id: string
 }
-
+        
 // Bulk Update Photo  
 const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelection, event_id }: props) => {
     const authUser = useSelector((state: RootState) => state.auth.user)
@@ -41,11 +41,11 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
         setTag(tagArr);
     }
 
-    const[privacy, setPrivacy] = useState<string>('as_previous')
+    const [privacy, setPrivacy] = useState<string>('as_previous')
     const handlePrivacyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPrivacy((event.target as HTMLInputElement).value);
     };
-    
+
     const resetState = () => {
         setPrivacy('as_previous')
         setTag([])
@@ -53,36 +53,36 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
         setSelectedEvent(null)
     }
 
-     const handleCloseDialog = () => {
+    const handleCloseDialog = () => {
         resetState()
         onCloseDialog()
-     }
+    }
 
 
-    const handleUpdate = async(e: React.FormEvent<HTMLButtonElement>) => {
+    const handleUpdate = async (e: React.FormEvent<HTMLButtonElement>) => {
         e.preventDefault();
         try {
-            const data:any = {
+            const data: any = {
                 photo_ids: photo_ids,
             }
-            if(tag.length >0){
+            if (tag.length > 0) {
                 data.tags = tag
             }
-            if(taggedUsers.length>0){
+            if (taggedUsers.length > 0) {
                 data.tagged_users = taggedUsers.map((e) => e.email)
             }
-            if(selectedEvent){
+            if (selectedEvent) {
                 data.event = selectedEvent.id;
             }
-           if(privacy === 'public'){ data.is_private=false}
-           else if(privacy === 'private') data.is_private=true
-           await Promise.all(
-            photo_ids.map(id => dispatch(fetchPhotoDetails(id)).unwrap())
-        )
-           await dispatch(updatePhotos(data)).unwrap()
-           toast.success('Photos are updated successfully') 
-           handleCloseDialog()
-           onClearSelection() 
+            if (privacy === 'public') { data.is_private = false }
+            else if (privacy === 'private') data.is_private = true
+            await Promise.all(
+                photo_ids.map(id => dispatch(fetchPhotoDetails(id)).unwrap())
+            )
+            await dispatch(updatePhotos(data)).unwrap()
+            toast.success('Photos are updated successfully')
+            handleCloseDialog()
+            onClearSelection()
         } catch (error) {
             console.log(error);
             toast.error(String(error) || 'Something went wrong')
@@ -101,95 +101,106 @@ const UpdatePhoto = ({ isDialogOpened, onCloseDialog, photo_ids, onClearSelectio
                 </IconButton>
             </DialogTitle>
             <Divider />
-            <DialogContent>
-                    {/* Move to Event */}
-                    <Autocomplete
-                        disablePortal fullWidth
-                        value={selectedEvent}
-                        onChange={(_, newValue: AppEvent | null) => setSelectedEvent(newValue)}
-                        options={eventlist.filter((e) => e.event_photographer === authUser?.email) ?? []}
-                        getOptionLabel={(option) => option.event_name}
-                        renderOption={(props, option) => {
-                            const { key, ...restprops } = props;
-                            return (<li key={key} {...restprops}>
-                                <Box sx={{
-                                    width: "100%", px: 1.5, py: 1, borderRadius: 1,
-                                    "&:hover": { bgcolor: "grey.100" },
-                                }}
-                                >
-                                    <Typography fontSize={14} fontWeight={600}>
-                                        {option.event_name}
-                                    </Typography>
-                                    <Typography fontSize={12} color="text.secondary">
-                                        {option.event_date}
-                                    </Typography>
-                                </Box>
-                            </li>
-                            )
-                        }
+            <DialogContent sx={{ py: 2 }}>
+                {/* Move to Event */}
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 0.5, display: "block" }}
+                >
+                    Move to Event
+                </Typography>
+                <Autocomplete
+                    disablePortal fullWidth
+                    value={selectedEvent}
+                    onChange={(_, newValue: AppEvent | null) => setSelectedEvent(newValue)}
+                    options={eventlist.filter((e) => e.event_photographer === authUser?.email) ?? []}
+                    getOptionLabel={(option) => option.event_name}
+                    renderOption={(props, option) => {
+                        const { key, ...restprops } = props;
+                        return (<li key={key} {...restprops}>
+                            <Box sx={{
+                                width: "100%", px: 1.5, py: 1, borderRadius: 1,
+                                "&:hover": { bgcolor: "grey.100" },
+                            }}
+                            >
+                                <Typography fontSize={14} fontWeight={600}>
+                                    {option.event_name}
+                                </Typography>
+                                <Typography fontSize={12} color="text.secondary">
+                                    {option.event_date}
+                                </Typography>
+                            </Box>
+                        </li>
+                        )
                     }
-                    renderInput={(params) => <TextField {...params} label=' Event Name ' placeholder='Move to another Event...' required />}
-                    />
-
-                    {/* Add Tagged Users */}
-                    <Autocomplete
-                        disablePortal fullWidth multiple
-                        value={taggedUsers}
-                        onChange={handleUserListOnChange}
-                        options={userlist ?? []}
-                        getOptionLabel={(option) => option.username}
-                        renderOption={(props, option) => {
-                            const { key, ...restprops } = props;
-                            return (<li key={key} {...restprops}>
-                                <Box sx={{
-                                    width: "100%", px: 1.5, py: 1, borderRadius: 1,
-                                    "&:hover": { bgcolor: "grey.100" },
-                                }}
-                                >
-                                    <Typography fontSize={14} fontWeight={600}>
-                                        {option.email}
-                                    </Typography>
-                                    <Typography fontSize={12} color="text.secondary">
-                                        {option.username}
-                                    </Typography>
-                                </Box>
-                            </li>
-                            )
-                        }
                     }
-                        renderInput={(params) => <TextField {...params} label='Tagged Users' placeholder='Add new Tagged Users...' />}
-                    />
+                    renderInput={(params) => <TextField {...params} label='Event ' placeholder='Move photos to another event...' required />}
+                />
 
-                    {/* Change Photo Privacy  */}
-                    {/* Private or Public or as previous */}
-                    <FormControl>
-                        <FormLabel id="privacy-radio-buttons-group">Privacy</FormLabel>
-                        <RadioGroup
-                            row
-                            aria-labelledby="privacy-radio-buttons-group"
-                            name="privacy-radio-buttons-group"
-                            value={privacy}
-                            onChange={handlePrivacyChange}
-                        >
-                            <FormControlLabel value="public" control={<Radio />} label="Public" />
-                            <FormControlLabel value="private" control={<Radio />} label="Private" />
-                            <FormControlLabel value="as_previous" control={<Radio />} label="As Previous" />
-                        </RadioGroup>
-                    </FormControl>
+                {/* Add Tagged Users */}
+                <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mb: 0.5, display: "block" }}
+        >
+          Tagged Users
+        </Typography>
+                <Autocomplete
+                    disablePortal fullWidth multiple
+                    value={taggedUsers}
+                    onChange={handleUserListOnChange}
+                    options={userlist ?? []}
+                    getOptionLabel={(option) => option.username}
+                    renderOption={(props, option) => {
+                        const { key, ...restprops } = props;
+                        return (<li key={key} {...restprops}>
+                            <Box sx={{
+                                width: "100%", px: 1.5, py: 1, borderRadius: 1,
+                                "&:hover": { bgcolor: "grey.100" },
+                            }}
+                            >
+                                <Typography fontSize={14} fontWeight={600}>
+                                    {option.email}
+                                </Typography>
+                                <Typography fontSize={12} color="text.secondary">
+                                    {option.username}
+                                </Typography>
+                            </Box>
+                        </li>
+                        )
+                    }
+                    }
+                    renderInput={(params) => <TextField {...params} label='Users' placeholder='Add Tagged Users...' />}
+                />
+                {/* Change Photo Privacy  */}
+                {/* Private or Public or as previous */}
+                <FormControl>
+                    <FormLabel id="privacy-radio-buttons-group">Privacy</FormLabel>
+                    <RadioGroup row
+                        aria-labelledby="privacy-radio-buttons-group"
+                        name="privacy-radio-buttons-group"
+                        value={privacy}
+                        onChange={handlePrivacyChange}
+                    >
+                        <FormControlLabel value="public" control={<Radio />} label="Public" />
+                        <FormControlLabel value="private" control={<Radio />} label="Private" />
+                        <FormControlLabel value="as_previous" control={<Radio />} label="Keep as is" />
+                    </RadioGroup>
+                </FormControl>
 
-
-                    {/* Add Tags */}
-                    <TextField
-                        label='Add Tags'
-                        placeholder='Add tags separated by commas'
-                        fullWidth
-                        margin='normal'
-                        value={tag}
-                        onChange={handleTagChange}
-                    />
+                {/* Add Tags */}
+                <TextField
+                    label='Add Tags'
+                    placeholder='Add tags separated by commas'
+                    fullWidth
+                    margin='normal'
+                    value={tag}
+                    onChange={handleTagChange}
+                />
 
             </DialogContent>
-            <DialogActions>
+            <DialogActions  sx={{ px: 3, py: 1.5 }}>
                 <Button onClick={handleUpdate} >Update</Button>
             </DialogActions>
         </Dialog>

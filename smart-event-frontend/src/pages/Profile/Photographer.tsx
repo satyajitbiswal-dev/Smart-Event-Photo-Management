@@ -151,6 +151,7 @@ const PhotographerDashboard = () => {
             icon={<Favorite />}
             color="#ef4444"
           />
+          
         </Grid>
         <Grid size={{ xs: 6, md: 4, lg: 2 }}>
           <StatCard
@@ -167,6 +168,9 @@ const PhotographerDashboard = () => {
             icon={<Download />}
             color="#8b5cf6"
           />
+          <Typography variant="caption" color="textSecondary" >
+          **Your monthly limit is 50
+          </Typography>
         </Grid>
       </Grid>
 
@@ -213,7 +217,7 @@ const PhotographerDashboard = () => {
                         size="small"
                         variant="text"
                         onClick={() =>
-                          navigate(`/event/${row.event.id}/photos`)
+                          navigate(`/events/${row.event.id}/photos`)
                         }
                       >
                         View

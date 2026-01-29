@@ -14,8 +14,8 @@ import CloseIcon from "@mui/icons-material/Close";
 
 const OMNIPORT_LOGIN_URL = `
 https://channeli.in/oauth/authorise/
-?client_id=6bugbw6qVuKIos4sPnIPM5FlrFZLb1IBZ9sAYBTC
-&redirect_uri=http://localhost:5173/accounts/channeli/callback/
+?client_id=${import.meta.env.VITE_CLIENT_ID}
+&redirect_uri=${import.meta.env.VITE_REDIRECT_URI}
 `;
 
 export default function SignIn() {
@@ -77,7 +77,7 @@ export default function SignIn() {
       setDialogOpen(true);
       setEmail(email)
       setPassword(password)
-      // Handle successful login, e.g., store token, redirect, etc.
+      
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error?.response?.status == 403 || error?.response?.status == 401) {

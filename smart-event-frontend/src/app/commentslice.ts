@@ -6,7 +6,7 @@ import type { RootState } from "./store";
 type CommentState = {
     commentById: Record<string, Comment>;
     commentsByPhoto: Record<string, string[]>;   // root ids
-    repliesByParent: Record<string, string[]>;   
+    repliesByParent: Record<string, string[]>;
 };
 
 const initialState: CommentState = {
@@ -71,9 +71,25 @@ const commentSlice = createSlice({
         builder.addCase(fetchCommentsByPhotoId.fulfilled, (state, action) => {
             const { photo_id, comments } = action.payload;
 
+            // All comment ids for this photo from the fresh payload
+            const idsForPhoto = new Set<string>(comments.map((c: Comment) => c.id));
+            // Reset root list for this photo
             state.commentsByPhoto[photo_id] = [];
-
-            comments.forEach(comment => {
+            // Clean up replies that belong to this photo
+            Object.keys(state.repliesByParent).forEach(parentId => {
+                if (idsForPhoto.has(parentId)) {
+                    delete state.repliesByParent[parentId];
+                } else {
+                    state.repliesByParent[parentId] = state.repliesByParent[parentId].filter(
+                        childId => !idsForPhoto.has(childId)
+                    );
+                    if (state.repliesByParent[parentId].length === 0) {
+                        delete state.repliesByParent[parentId];
+                    }
+                }
+            });
+            // Rebuild from the fresh 
+            comments.forEach((comment: Comment) => {
                 state.commentById[comment.id] = comment;
 
                 if (!comment.parent_comment) {
@@ -107,7 +123,6 @@ const commentSlice = createSlice({
             const { id, photo_id } = action.payload
 
             delete state.commentById[id]
-
             // remove from root list
             if (state.commentsByPhoto[photo_id]) {
                 state.commentsByPhoto[photo_id] =

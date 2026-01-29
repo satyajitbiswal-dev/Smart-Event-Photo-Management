@@ -5,26 +5,6 @@ import { Navigate } from 'react-router-dom';
 import type { RootState } from '../app/store.ts';
 import { selectIsAuthenticated, selectIsGuest } from '../app/authslice.ts';
 
-// export const Protected = ({ children, authentication = true }) => {
-//     const navigate = useNavigate()
-//     const loading = useSelector((state: RootState) => state.auth.loading)
-//     const isauthenticated = useSelector(selectIsAuthenticated)
-//     const isGuest = useSelector(selectIsGuest)
-
-//     const allowed = isauthenticated || isGuest;
-// // 
-//     useEffect(() => {
-//         if (!loading) {
-//             if (authentication && !allowed) navigate("/signin")
-//             if (!authentication && allowed) navigate("/")
-//         }
-//     }, [allowed, authentication, loading, navigate])
-
-//     if (loading) return <h1>Loading...</h1>
-//     return <>{children}</>
-// }
-
-
 export const Protected = ({ children, authentication = true, allowedRole = ['P','M','A'] }) => {
   const loading = useSelector((state: RootState) => state.auth.loading);
   const authUser = useSelector((state: RootState) => state.auth.user);

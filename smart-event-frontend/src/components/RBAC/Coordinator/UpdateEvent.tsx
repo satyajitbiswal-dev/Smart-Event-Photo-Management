@@ -22,8 +22,6 @@ const UpdateEvent = ({event_id}) => {
     }
   }, [event_id])
   
-  
-
   const [isEditable, setIsEditable] = useState<boolean>(false)
 
   const protectedEmails = useMemo(() => {
@@ -82,12 +80,13 @@ const UpdateEvent = ({event_id}) => {
     try {
       const formData = new FormData(e.currentTarget);
       const formJson: Partial<Event> = Object.fromEntries(formData.entries())
-      if (formJson['event_time']) {
-        formJson['event_time'] = dayjs(formJson['event_time'], ["h:m A", "H:m"]).format("HH:mm");
+      if (!formJson['event_time']) {
+        formJson['event_time'] = undefined
       }
       // formJson['event_members'] = updatedMembers
       await dispatch(updateEvent({ id: selectedEvent.id, data: formJson })).unwrap()
-      // toastMessage('Event Update Successfully')
+      setIsEditable(!isEditable)
+      toastMessage('Event Update Successfully',"top-right")
     } catch (error) {
       if (typeof error === 'object' && error !== null) {
         for (const key in error) {
@@ -136,8 +135,7 @@ const UpdateEvent = ({event_id}) => {
           </Typography>
         </Paper>}
 
-        <Paper elevation={3} sx={{
-          mt: { xs: 6, md: 7 },
+        <Paper elevation={3} sx={{ mt: { xs: 6, md: 7 },
           mx: { xs: 2, md: 4 },
           p: { xs: 4, md: 6 },
           pt: { xs: 6, md: 7 },
@@ -257,7 +255,7 @@ const UpdateEvent = ({event_id}) => {
           </form>
           {
             selectedEvent.event_coordinator === authUser?.email &&
-            <ButtonGroup>
+            <ButtonGroup >
               <Button variant={isEditable ? "outlined" : "contained"} onClick={handleToggle}>
                 {isEditable ? "Cancel" : "Edit Changes"}</Button>
               <Button variant={isEditable ? "contained" : "outlined"} disabled={!isEditable} type='submit' form='event-update-form' >Save Changes</Button>

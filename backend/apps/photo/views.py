@@ -157,7 +157,6 @@ class BulkPhotoUpdate(generics.GenericAPIView):
             ],
         ignore_conflicts=True
     )
-        
         #send tag user notification
         updated_event = event or photos[0].event
         taguser_notification(photo_tagged_user=photo_tagged_user,event=updated_event) #photo_tagged_user = {user: photo_count}
@@ -168,13 +167,20 @@ class BulkPhotoUpdate(generics.GenericAPIView):
 
 update_view = BulkPhotoUpdate.as_view()
 
+# single photo update view 
+class PhotoSingleUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Photo.objects.all()
+    lookup_field='photo_id'
+    serializer_class=PhotoUpdateSerializer
+    permission_classes=[IsEventPhotoGrapher]
+
 
 class PhotoRetrieveView(generics.RetrieveAPIView):
     lookup_field = 'photo_id'
     serializer_class = PhotoSerializer
     def get_queryset(self): #queryset mil gaya
         user = self.request.user
-        if not user.is_authenticated or getattr(user, "role", None) == 'P':
+        if not user.is_authenticated or  getattr(user,'role',None) == 'P':
             return Photo.objects.filter(is_private=False)
         return Photo.objects.all()
 
@@ -190,7 +196,6 @@ class PhotoListView(generics.ListAPIView):
         qs = Photo.objects.all()
         params = self.request.query_params
         user = self.request.user
-
         #  Context scoping
         if event_id := params.get("event_id"):
             qs = qs.filter(event_id=event_id)
@@ -209,9 +214,8 @@ class PhotoListView(generics.ListAPIView):
             qs = search(search_query, qs)
 
         #  Privacy
-        if not user.is_authenticated or getattr(user, "role", None) == 'P':
+        if not user.is_authenticated or  getattr(user,'role',None) == 'P':
             qs = qs.filter(is_private=False)
-
 
         return qs
 
@@ -297,39 +301,5 @@ class RemainingDownloadAPIView(APIView):
 
 
 
-from django.db.models import F
-from django.core.cache import cache
-
-class PhotoViewCountAPIView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request, photo_id, *args, **kwargs):
-        photo = get_object_or_404(Photo, id=photo_id)
-
-        if request.user.is_authenticated:
-            viewer_id = f"user:{request.user.id}"
-        else:
-            session_key = request.session.session_key
-            if not session_key:
-                request.session.create()
-                session_key = request.session.session_key
-            viewer_id = f"session:{session_key}"
 
 
-        # Cache key (30 min window)
-        cache_key = f"photo_viewed:{photo_id}:{viewer_id}"
-
-        if cache.add(cache_key, 1, timeout=60 * 30):
-            Photo.objects.filter(id=photo_id).update(
-                view_count=F("view_count") + 1
-            )
-
-            return Response({
-                "status": "counted",
-                "view_count_incremented": True
-            })
-
-        return Response({
-            "status": "ignored",
-            "view_count_incremented": False
-        })

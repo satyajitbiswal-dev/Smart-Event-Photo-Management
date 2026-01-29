@@ -12,16 +12,20 @@ type Props = | {
     event_id: string;   // REQUIRED
     layout: 'standard' | 'masonry';
     setLayout: (v: 'standard' | 'masonry') => void;
+    onClose?: () => void
+    variant: 'sidebar' | 'drawer'
 }
     | {
         context: 'favourites' | 'tagged';
         event_id?: never;   // NOT allowed
         layout: 'standard' | 'masonry';
         setLayout: (v: 'standard' | 'masonry') => void;
+        onClose?: () => void
+        variant: 'sidebar' | 'drawer'
     };
 
 
-const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
+const GalleryControls = ({ context, event_id, layout, setLayout, onClose, variant }: Props) => {
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -61,61 +65,53 @@ const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
 
 
     return (
-        <Box
-            sx={{
-                display: { xs: 'none', md: 'block' },
-                position: 'sticky',
-                top: 135,
-                height: 'fit-content',
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                p: 2,
-                boxShadow: 2,
-            }}>
-            {/* Layout Toggle - Top */}
-            <ToggleButtonGroup
-                value={layout}
-                exclusive
-                size="small"
-                fullWidth
-                sx={{ mb: 2 }}
-                onChange={(_, value) => value && setLayout(value)}
-            >
-                <ToggleButton value="masonry">Masonry</ToggleButton>
-                <ToggleButton value="standard">Grid</ToggleButton>
-                {/* <ToggleButton value="timeline">Timeline</ToggleButton> */}
-            </ToggleButtonGroup>
+        <Box sx={{
+            position: variant === 'sidebar' ? 'sticky' : 'relative',
+            top: variant === 'sidebar' ? 120 : 0,
+            maxHeight: variant === 'drawer' ? '100vh' : 'calc(100vh - 150px)',
+            overflowY: 'auto',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            p: 2,
+            boxShadow: 3,
+        }}>
+            <Stack spacing={2}>
+                {/* Layout Toggle - Top */}
+                <Stack spacing={1.5}>
+                    <ToggleButtonGroup
+                        value={layout}
+                        exclusive
+                        size="small"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                        onChange={(_, value) => value && setLayout(value)}
+                    >
+                        <ToggleButton value="masonry">Masonry</ToggleButton>
+                        <ToggleButton value="standard">Grid</ToggleButton>
+                        {/* <ToggleButton value="timeline">Timeline</ToggleButton> */}
+                    </ToggleButtonGroup>
 
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    bgcolor: 'background.paper',
-                }}
-            >
-                {/* Search */}
-                <TextField
-                    size="small"
-                    fullWidth
-                    placeholder="Search photos…"
-                    value={draftFilters.search}
-                    onChange={(e) =>
-                        setDraftFilters(prev => ({ ...prev, search: e.target.value }))
-                    }
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <Search fontSize="small" />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
-
-
-                {/* 🎛 Filters */}
+                    {/* Search */}
+                    <TextField
+                        size="small"
+                        fullWidth
+                        placeholder="Search photos…"
+                        value={draftFilters.search}
+                        onChange={(e) =>
+                            setDraftFilters(prev => ({ ...prev, search: e.target.value }))
+                        }
+                        slotProps={{
+                            input: {
+                                startAdornment: (<InputAdornment position="start">
+                                    <Search fontSize="small" />
+                                </InputAdornment>
+                                ),
+                            }
+                        }}
+                    />
+                </Stack>
+                {/* Filters */}
                 <Stack spacing={1.5} direction={'column'} gap={1}>
-
                     <Box display="flex" alignItems="center" justifyContent="space-between">
                         <Box display="flex" alignItems="center" gap={1}>
                             <TuneRoundedIcon color="info" />
@@ -162,14 +158,13 @@ const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
 
                     </Box>
 
-
                     <TextField
                         size="small"
                         label="Tagged User"
                         placeholder="username"
                         value={draftFilters.tagged_users[0] ?? ''}
                         onChange={(e) =>
-                            setDraftFilters(prev => ({ ...prev, tagged_users: e.target.value ? [e.target.value]:[] }))
+                            setDraftFilters(prev => ({ ...prev, tagged_users: e.target.value ? [e.target.value] : [] }))
                         }
                     />
 
@@ -178,7 +173,7 @@ const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
                             Date Range
                         </Typography>
 
-                        <Stack direction="row" spacing={1}>
+                        <Stack direction="row" spacing={1} sx={{overflowX: 'scroll'}}>
                             {([
                                 { key: 'today', label: 'Today' },
                                 { key: 'this_week', label: 'This Week' },
@@ -186,9 +181,7 @@ const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
                                 { key: 'this_month', label: 'This Month' },
                             ] as const //Otherwise date_range's key will be string
                             ).map(({ key, label }) => (
-                                <Button
-                                    key={key}
-                                    size="small"
+                                <Button key={key} size="small" 
                                     variant={draftFilters.date_range === key ? 'contained' : 'outlined'}
                                     onClick={() =>
                                         setDraftFilters(prev => ({ ...prev, date_range: key, startDate: undefined, endDate: undefined }))
@@ -201,21 +194,25 @@ const GalleryControls = ({ context, event_id, layout, setLayout }: Props) => {
                     </Box>
 
                 </Stack>
-                <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={() => {
-                        dispatch(setGalleryFilters({
-                            context,
-                            event_id,
-                            filters: draftFilters,
-                        }));
-                    }}
-                >
-                    Apply Filters
-                </Button>
-
-            </Box>
+                <Stack direction={'row'} justifyContent={'space-between'}>
+                    <Button variant="contained"  size='small'
+                        onClick={() => {
+                            dispatch(setGalleryFilters({
+                                context,
+                                event_id,
+                                filters: draftFilters,
+                            }));
+                        }}
+                    >
+                        Apply Filters
+                    </Button>
+                    {variant === 'drawer' && (
+                        <Button variant="outlined" size='small' onClick={onClose}>
+                            Close
+                        </Button>
+                    )}
+                </Stack>
+            </Stack>
         </Box>
     )
 }

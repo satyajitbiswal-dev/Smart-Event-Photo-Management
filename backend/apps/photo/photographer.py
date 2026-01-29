@@ -18,9 +18,8 @@ class PhotoViewCountAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, photo_id, *args, **kwargs):
-        photo = get_object_or_404(Photo, id=photo_id)
+        photo = get_object_or_404(Photo, photo_id=photo_id)
 
-         
         if request.user.is_authenticated:
             viewer_id = f"user:{request.user.id}"
         else:
@@ -32,10 +31,9 @@ class PhotoViewCountAPIView(APIView):
 
         # Cache key (30 min window)
         cache_key = f"photo_viewed:{photo_id}:{viewer_id}"
-
         
         if cache.add(cache_key, 1, timeout=60 * 30):
-            Photo.objects.filter(id=photo_id).update(
+            Photo.objects.filter(photo_id=photo_id).update(
                 view_count=F("view_count") + 1
             )
 
@@ -49,15 +47,6 @@ class PhotoViewCountAPIView(APIView):
             "view_count_incremented": False
         })
 
-
-class PhotoGraphicDashBoard(APIView):
-    # permission_classes = [is] Event Photographer
-
-    def get(self, request, *args, **kwargs):
-        return Response({
-            'message':''
-        })
-    
 
     # Like Count
     # Comment Count
@@ -75,10 +64,10 @@ class DashBoardEventView(APIView):
     def get(self, request, *args, **kwargs):
         user = self.request.user
         photographed_events = Event.objects.filter(event_photographer = user)
-        if not photographed_events:
-            return Response({
-                'message':'No Photographed Events'
-            })
+        # if not photographed_events:
+        #     return Response({
+        #         'message':'No Photographed Events'
+        #     })
         
         event_ids = photographed_events.values_list("id", flat=True)
         photo_view_summary = Photo.objects.filter(event_id__in=event_ids).values('event_id').annotate(photo_count = Count('photo_id'), view_count = Sum('view_count') )

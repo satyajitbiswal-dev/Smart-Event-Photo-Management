@@ -164,6 +164,10 @@ export function EventMembersSelect({ event, isEditMode,protectedEmails, members,
           placeholder="add or remove members"
         />
       )}
+      sx={{
+        mt:5,
+        mb:5
+      }}
     />
   );
 }

@@ -51,11 +51,12 @@ const CommentSection = ({ photo_id }: { photo_id: string }) => {
     return commentById[comment.parent_comment]?.user.username
   }
 
+  console.log(rootCommentIds, repliesByParent)
   const renderComment = (id: string) => {
     const comment = commentById[id]
     if (!comment) return null
     return (
-      <Box key={id}>
+      <React.Fragment key={id}>
         <CommentItem
           {...comment}
           indent={getIndent(comment)}
@@ -65,11 +66,8 @@ const CommentSection = ({ photo_id }: { photo_id: string }) => {
           }
           onDelete={handleDelete}
         />
-
-        {repliesByParent[id]?.map(childId =>
-          renderComment(childId)
-        )}
-      </Box>
+           {repliesByParent[id]?.map(childId => renderComment(childId))}
+      </React.Fragment>
     )
   }
 

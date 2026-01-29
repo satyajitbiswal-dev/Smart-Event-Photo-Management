@@ -4,13 +4,16 @@ import useInfinityGallery from '../../hooks/useInfinityPhoto'
 import useInfinityScroll from '../../hooks/useInfinityScroll'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import UpdatePhoto from '../RBAC/Photographer/UpdatePhoto'
 import DeletePhoto from '../RBAC/Photographer/DeletePhoto'
 import { useMemo } from "react";
 import { makeSelectEventPhotos, makeSelectContextPhotos, } from "../../app/selectors/photoSelector";
 import { resetGalleryPagination } from '../../app/photoslice'
 import type { AppDispatch } from '../../app/store'
+
+
+
 
 type props = {
   event_id: string | null,
@@ -32,23 +35,18 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
   }, [context, event_id])
   );
 
-  /* REDUX-BASED INFINITE GALLERY */
+  /* GALLERY */
   const { loading, hasMore, loadMore } = useInfinityGallery(context, event_id ?? undefined);
+  const dispatch = useDispatch<AppDispatch>()
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const ref = useInfinityScroll({
+    containerRef,
     loading,
     hasmore: hasMore,
     loadmore: loadMore,
     deps: [photos.length],
   });
-
-  /* INITIAL LOAD */
-  // const dispatch = useDispatch<AppDispatch>()
-  // useEffect(() => {
-  //   dispatch(resetGalleryPagination({ context, event_id: event_id ?? undefined }));
-  //   // eslint-disable-next-line
-  // }, [context, event_id]);
-
 
   const navigate = useNavigate()
 
@@ -65,7 +63,6 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
     handleClose()
     setDialogOpen(!dialogOpen)
   }
-
 
   //Check box control 
   const [selectValue, setSelectValue] = useState<string[]>([])
@@ -92,14 +89,18 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
 
   const handlePhotoOnClick = (photo_id: string) => {
     if (viewMode === 'view') {
-      navigate(`/photos/${photo_id}/`)
+      navigate(`/photos/${photo_id}/`, {
+        state: {
+          source: mode,
+          event_id: event_id,
+        }
+      })
     } else {
       toggleSelect(photo_id)
     }
   }
 
   const cols = useBreakPointValue({ xs: 4, sm: 5, md: 6 })
-
   if (loading && photos.length === 0) {
     return <Typography>loading ...</Typography>
   }
@@ -107,7 +108,6 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
   if (!loading && photos.length === 0) {
     return <Typography>No Photos ...</Typography>
   }
-
   return (
     <Stack spacing={4} mb={3} mt={1} >
       {
@@ -172,74 +172,79 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
 
         </>
       }
-      <ImageList
-        cols={cols}
-        gap={20}
-        sx={{ p: 2 }}
-        variant={layout}
-      >
-        {photos.map((item) => {
-          return (
-            <ImageListItem
-              key={item.photo_id}
-              sx={{
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: "all 0.25s ease",
-                "&:hover": {
-                  transform: viewMode === 'view' ? "translateY(-6px)" : 'none',
-                  boxShadow: viewMode === "view" ? 6 : 2,
-                },
-              }}
-              onClick={() => handlePhotoOnClick(item.photo_id)}
-            >
-              {
-                viewMode === 'bulk' &&
-                (<Checkbox
-                  checked={selectValue.includes(item.photo_id)}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={() => toggleSelect(item.photo_id)}
-                  sx={{
-                    position: "absolute",
-                    top: 8,
-                    left: 8,
-                    zIndex: 2,
-                    bgcolor: "rgba(0,0,0,0.4)",
-                    borderRadius: "50%",
-                    color: "white",
-                    "&.Mui-checked": {
-                      color: "primary.main",
-                    },
-                  }}
-                />)
-              }
-              <img
-                src={item.thumbnail}
-                alt={item.photo_id}
-                loading="lazy"
-                decoding="async"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
+        <ImageList
+          cols={cols}
+          gap={20}
+          sx={{ p: 2 }}
+          variant={layout}
+        >
+          {photos.map((item) => {
+            return (
+              <ImageListItem
+                key={item.photo_id}
+                sx={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  transition: "all 0.25s ease",
+                  "&:hover": {
+                    transform: viewMode === 'view' ? "translateY(-6px)" : 'none',
+                    boxShadow: viewMode === "view" ? 6 : 2,
+                  },
                 }}
-              />
-            </ImageListItem>
-          )
-        })
+                onClick={() => handlePhotoOnClick(item.photo_id)}
+              >
+                {
+                  viewMode === 'bulk' &&
+                  (<Checkbox
+                    checked={selectValue.includes(item.photo_id)}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => toggleSelect(item.photo_id)}
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      left: 8,
+                      zIndex: 2,
+                      bgcolor: "rgba(0,0,0,0.4)",
+                      borderRadius: "50%",
+                      color: "white",
+                      "&.Mui-checked": {
+                        color: "primary.main",
+                      },
+                    }}
+                  />)
+                }
 
-        }
-        <div
+
+                <img
+                  src={item.thumbnail}
+                  alt={item.photo_id}
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+
+              </ImageListItem>
+            )
+          })
+
+          }
+
+        </ImageList>
+        <Box
           ref={ref}
           style={{
-            height: "1px",
+            height: "40px",
             width: "100%",
           }}
         />
-      </ImageList>
+
     </Stack>
 
   )

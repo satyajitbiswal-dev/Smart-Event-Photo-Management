@@ -1,5 +1,3 @@
-
-
 const ConfirmationPage = () => {
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>

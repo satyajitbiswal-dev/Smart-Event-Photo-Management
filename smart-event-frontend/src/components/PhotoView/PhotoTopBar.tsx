@@ -100,7 +100,6 @@ const PhotoTopBar = ({ onBack, photo, selectedEvent, taggedUsers, photographer }
             Photo Info
           </Typography>
           <Divider sx={{ mb: 2 }} />
-
           <PhotoINFO
             photo={photo}
             selectedEvent={selectedEvent}

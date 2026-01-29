@@ -3,7 +3,7 @@ import { Slide, toast } from "react-toastify";
 export default function toastMessage(message, position) {
     return toast(String(message), {
                 position: position ?? "top-right",
-                autoClose: 3000,
+                autoClose: 2000,
                 hideProgressBar: false,
                 closeOnClick: false,
                 pauseOnHover: true,

@@ -8,7 +8,7 @@ const useRefreshToken = () => {
 
   const refresh = async () => {
     try {
-      // Step 1: Get new access token using refresh token from cookie
+      // Get new access token using refresh token from cookie
       const tokenRes = await axios.post(
         "http://127.0.0.1:8000/api/token/refresh/",
         {},
@@ -18,7 +18,7 @@ const useRefreshToken = () => {
       const accessToken = tokenRes.data.access;
       dispatch(setAccessToken(accessToken));
 
-      // Step 2: Fetch user data using the new access token
+      // Fetch user data using the new access token
       try {
         const userRes = await axios.get(
           "http://127.0.0.1:8000/auth/me/",
@@ -41,13 +41,13 @@ const useRefreshToken = () => {
         // If user fetch fails, we still have the token, so continue
       }
 
-      // Mark auth as initialized (stop loading state)
+      // Mark auth as initialized 
       dispatch(AppInit());
 
       return accessToken;
     } catch (error) {
       console.error("Token refresh failed:", error);
-      // Even if refresh fails, stop loading so Protected can redirect properly
+      // if refresh fails, stop loading so Protected can redirect properly(by chance fail hua)
       dispatch(AppInit());
       throw error;
     }

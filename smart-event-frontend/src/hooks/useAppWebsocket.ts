@@ -4,6 +4,7 @@ import { Slide, toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { addNotification } from "../app/notificationslice";
 import { photoLiked } from "../app/photoslice";
+import { fetchCommentsByPhotoId } from "../app/commentslice";
 
 export const useAppWebSocket = (token: string | null) => {
 
@@ -19,7 +20,7 @@ export const useAppWebSocket = (token: string | null) => {
   // Run when a new WebSocket message is received (lastJsonMessage)
   useEffect(() => {
     if (lastJsonMessage?.type === 'send_notification') {
-      console.log('Hey There this is your notification message ', lastJsonMessage)
+      // console.log('Hey There this is your notification message ', lastJsonMessage)
       toast(String(lastJsonMessage?.value.text_message), {
         position: "top-center",
         autoClose: 3000,
@@ -33,8 +34,12 @@ export const useAppWebSocket = (token: string | null) => {
       });
       dispatch(addNotification(lastJsonMessage?.value))
     }else if(lastJsonMessage?.type === 'like_update'){
-      console.log(lastJsonMessage);
+      // console.log(lastJsonMessage);
       dispatch(photoLiked(lastJsonMessage?.value))
+    }else if(lastJsonMessage?.type === 'comment_update'){
+      const photo_id:string | null = lastJsonMessage?.value?.photo_id
+      if(!photo_id) return
+      dispatch(fetchCommentsByPhotoId(photo_id))
     }
   }, [lastJsonMessage,dispatch])
 
