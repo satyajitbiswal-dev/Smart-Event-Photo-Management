@@ -299,7 +299,47 @@ class RemainingDownloadAPIView(APIView):
             "blocked": count >= LIMIT
         })
 
+import io
+import zipfile
+from django.http import StreamingHttpResponse
+from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
 
+class DownloadEventPhotosZip(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, id):
+        try:
+            event = Event.objects.get(id=id)
+        except Event.DoesNotExist:
+            raise NotFound("Event not found")
+
+        photos = Photo.objects.filter(event=event,watermarked_image__isnull=False)
+
+        if not photos.exists():
+            return StreamingHttpResponse("No photos available",status=400)
+
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for idx, photo in enumerate(photos, start=1):
+                file_path = photo.watermarked_image.path
+  
+                filename = f"{event.slug}_{idx}.jpg"
+
+                with open(file_path, "rb") as f:
+                    zip_file.writestr(filename, f.read())
+
+        zip_buffer.seek(0)
+
+        response = StreamingHttpResponse(
+            zip_buffer,
+            content_type="application/zip"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{event.slug}_photos.zip"'
+        )
+
+        return response
 
 

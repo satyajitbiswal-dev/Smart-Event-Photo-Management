@@ -17,11 +17,10 @@ const Gallery = ({ title, subtitle, viewMode, mode, event }: Gallery) => {
   const [openControls, setOpenControls] = useState(false)
   
 
-
   if (mode === 'event') {
     return (
       <>
-        <GalleryHeader title={title} subtitle={subtitle} event={event} viewMode={viewMode}
+        <GalleryHeader title={title} subtitle={subtitle} event={event} viewMode={viewMode} mode={mode}
           extraAction={
             isMobile && (
               <IconButton onClick={() => setOpenControls(true)}>
@@ -72,7 +71,7 @@ const Gallery = ({ title, subtitle, viewMode, mode, event }: Gallery) => {
   }
   return (
     <>
-      <GalleryHeader title={title} subtitle={subtitle} event={null} viewMode={viewMode} />
+      <GalleryHeader title={title} subtitle={subtitle} event={null} viewMode={viewMode} mode={mode} />
         {/* LEFT SIDEBAR */}
        <Box display="flex" gap={2} px={2}>
           {/* DESKTOP SIDEBAR */}
@@ -100,7 +99,6 @@ const Gallery = ({ title, subtitle, viewMode, mode, event }: Gallery) => {
               variant="drawer"                      
             />
           </Drawer>
-
 
         {/* RIGHT CONTENT */}
         <Box sx={{ flex: 1 }}>

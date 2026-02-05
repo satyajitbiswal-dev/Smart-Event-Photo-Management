@@ -1,19 +1,14 @@
-import { Box, Button, Checkbox, FormControlLabel, FormGroup, ImageList, ImageListItem, Menu, MenuItem, Stack, Tooltip, Typography } from '@mui/material'
+import { Box, Button, Checkbox, CircularProgress, FormControlLabel, FormGroup, ImageList, ImageListItem, Menu, MenuItem, Stack, Tooltip, Typography } from '@mui/material'
 import useBreakPointValue from '../../hooks/useMediaQuery'
 import useInfinityGallery from '../../hooks/useInfinityPhoto'
-import useInfinityScroll from '../../hooks/useInfinityScroll'
 import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
-import { useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { useState } from 'react'
 import UpdatePhoto from '../RBAC/Photographer/UpdatePhoto'
 import DeletePhoto from '../RBAC/Photographer/DeletePhoto'
 import { useMemo } from "react";
 import { makeSelectEventPhotos, makeSelectContextPhotos, } from "../../app/selectors/photoSelector";
-import { resetGalleryPagination } from '../../app/photoslice'
-import type { AppDispatch } from '../../app/store'
-
-
-
+import UpdateSinglePhoto from '../RBAC/Photographer/UpdateSinglePhoto'
 
 type props = {
   event_id: string | null,
@@ -24,7 +19,6 @@ type props = {
 
 
 const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
-
   const context = mode === "event" ? "event" : mode === "favourites" ? "favourites" : "tagged";
 
   const photos = useSelector(useMemo(() => {
@@ -36,18 +30,7 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
   );
 
   /* GALLERY */
-  const { loading, hasMore, loadMore } = useInfinityGallery(context, event_id ?? undefined);
-  const dispatch = useDispatch<AppDispatch>()
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
-  const ref = useInfinityScroll({
-    containerRef,
-    loading,
-    hasmore: hasMore,
-    loadmore: loadMore,
-    deps: [photos.length],
-  });
-
+  const { ref, loading, hasMore } = useInfinityGallery(context, event_id ?? undefined);
   const navigate = useNavigate()
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
@@ -105,9 +88,6 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
     return <Typography>loading ...</Typography>
   }
 
-  if (!loading && photos.length === 0) {
-    return <Typography>No Photos ...</Typography>
-  }
   return (
     <Stack spacing={4} mb={3} mt={1} >
       {
@@ -155,13 +135,15 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
             </MenuItem>
 
           </Menu>
-          <UpdatePhoto
+          {/* { selectValue.length >= 1 && */}
+            <UpdatePhoto
             isDialogOpened={dialogOpen}
             onCloseDialog={() => setDialogOpen(false)}
             photo_ids={selectValue}
             event_id={event_id ?? ''}
             onClearSelection={() => setSelectValue([])}
           />
+          {/* } */}
           <DeletePhoto
             isDialogOpened={deleteDialogOpen}
             onCloseDialog={() => setDeleteDialogOpen(false)}
@@ -169,81 +151,103 @@ const GalleryPhotos = ({ event_id, layout, mode, viewMode }: props) => {
             event_id={event_id}
             onClearSelection={() => setSelectValue([])}
           />
-
+          {/* {
+            selectValue.length === 1 &&
+            <UpdateSinglePhoto
+            open={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            photo_id={selectValue[0]}
+            // event_id={event_id ?? ''}
+            // onClearSelection={() => setSelectValue([])}
+          />
+          } */}
+          
         </>
       }
-        <ImageList
-          cols={cols}
-          gap={20}
-          sx={{ p: 2 }}
-          variant={layout}
-        >
-          {photos.map((item) => {
-            return (
-              <ImageListItem
-                key={item.photo_id}
-                sx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  borderRadius: 2,
-                  cursor: 'pointer',
-                  transition: "all 0.25s ease",
-                  "&:hover": {
-                    transform: viewMode === 'view' ? "translateY(-6px)" : 'none',
-                    boxShadow: viewMode === "view" ? 6 : 2,
-                  },
-                }}
-                onClick={() => handlePhotoOnClick(item.photo_id)}
-              >
-                {
-                  viewMode === 'bulk' &&
-                  (<Checkbox
-                    checked={selectValue.includes(item.photo_id)}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={() => toggleSelect(item.photo_id)}
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      left: 8,
-                      zIndex: 2,
-                      bgcolor: "rgba(0,0,0,0.4)",
-                      borderRadius: "50%",
-                      color: "white",
-                      "&.Mui-checked": {
-                        color: "primary.main",
-                      },
-                    }}
-                  />)
-                }
-
-
-                <img
-                  src={item.thumbnail}
-                  alt={item.photo_id}
-                  loading="lazy"
-                  decoding="async"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
+      <ImageList
+        cols={cols}
+        gap={20}
+        sx={{ p: 2 }}
+        variant={layout}
+      >
+        {photos.map((item) => {
+          return (
+            <ImageListItem
+              key={item.photo_id}
+              sx={{
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: "all 0.25s ease",
+                "&:hover": {
+                  transform: viewMode === 'view' ? "translateY(-6px)" : 'none',
+                  boxShadow: viewMode === "view" ? 6 : 2,
+                },
+              }}
+              onClick={() => handlePhotoOnClick(item.photo_id)}
+            >
+              {
+                viewMode === 'bulk' &&
+                (<Checkbox
+                  checked={selectValue.includes(item.photo_id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => toggleSelect(item.photo_id)}
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    zIndex: 2,
+                    bgcolor: "rgba(0,0,0,0.4)",
+                    borderRadius: "50%",
+                    color: "white",
+                    "&.Mui-checked": {
+                      color: "primary.main",
+                    },
                   }}
-                />
+                />)
+              }
 
-              </ImageListItem>
-            )
-          })
+              <img
+                src={item.thumbnail}
+                alt={item.photo_id}
+                loading="lazy"
+                decoding="async"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
 
-          }
+            </ImageListItem>
+          )
+        })
 
-        </ImageList>
-        <Box
-          ref={ref}
-          style={{
-            height: "40px",
-            width: "100%",
-          }}
-        />
+        }
+
+      </ImageList>
+      <Box ref={ref}
+        sx={{
+          height: 40, width: '100%',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {loading ? (<CircularProgress size={20} />) : 
+        !hasMore ? (
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              opacity: 0.6,
+              letterSpacing: '0.5px',
+            }}
+          >
+            No more photos
+          </Typography>
+        ) : null}
+      </Box>
 
     </Stack>
 

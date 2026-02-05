@@ -1,5 +1,5 @@
 import React from 'react'
-import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography } from '@mui/material'
+import { AppBar, Box, Button, Container, Divider, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +8,7 @@ import { LogoutOutlined } from '@mui/icons-material';
 import ProfilePic from '../../features/auth/ProfilePic';
 import type { RootState } from '../../app/store';
 import Notification from '../buttons/Notification';
+import ThemeToggle from '../buttons/ThemeButton';
 
 const pages = [{
   'name':'Home',
@@ -30,13 +31,13 @@ const privatepages = [{
 ];
 
 const Navbar = () => {
-  const authuser = useSelector((state:RootState) => state.auth.user)
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
 
   const navigate = useNavigate()
   const authUser = useSelector((state: RootState) => state.auth.user)
   const isAuthenticated = useSelector(selectIsAuthenticated)
+  const themeMode = useSelector((state:RootState) => state.theme.mode)
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -58,16 +59,14 @@ const Navbar = () => {
         dispatch(logout())
         dispatch(setPersist(false))
     }
-  return (
-    <AppBar position="sticky" elevation={1} sx={{maxHeight:64}}>
-      <Container maxWidth="xl" >
-        <Toolbar disableGutters>
 
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
+    const is500up = useMediaQuery('(max-width:500px)')
+  return (
+    <AppBar position="sticky" elevation={1} >
+      <Container maxWidth="xl"  >
+        <Toolbar disableGutters sx={{minHeight: { xs: 56, md: 64 },}}>
+          <Typography variant="h6"
+            noWrap component="a" href="/"
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -153,15 +152,18 @@ const Navbar = () => {
               </Button>
             ))}
             {(isAuthenticated || authUser?.role !=='P' ) && privatepages.map((page) => (
-                <MenuItem key={page.name} onClick={()=>{handleCloseNavMenu(); 
-                  navigate(`${page.route}`)
-                }}>
-                  <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
-                </MenuItem>
+                <Button
+                key={page.name}
+                onClick={()=>{handleCloseNavMenu(); navigate(`${page.route}`)}}
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                {page.name}
+              </Button>
               ))}
           </Box>
-          <Box sx={{ flexGrow: 0 }}>
+          <Box sx={{ flexGrow: 0 }}  >
             { (isAuthenticated || authUser?.role !== 'P') && <Notification/>}
+            {!is500up &&  <ThemeToggle view={'Desktop'} />}
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                 <ProfilePic/>
@@ -200,6 +202,7 @@ const Navbar = () => {
                 navigate('photographer/dashboard/')}}
             >Your Dashboard</MenuItem>
           }
+          {is500up &&  <ThemeToggle view='Mobile' />}
           <Divider/>
               <MenuItem key="logout" onClick={()=>{
                 handleCloseUserMenu()

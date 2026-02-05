@@ -6,6 +6,7 @@ import notificationReducer from './notificationslice.ts'
 import photoReducer from './photoslice.ts'
 import commentReducer from './commentslice.ts'
 import dashboardReducer from './dashboardslice.ts'
+import themeReducer from './theme.ts'
 export const store = configureStore({
     reducer: {
         auth: authReducer,
@@ -14,7 +15,8 @@ export const store = configureStore({
         notification: notificationReducer,
         photo:photoReducer,
         comment:commentReducer,
-        dashboard:dashboardReducer
+        dashboard:dashboardReducer,
+        theme: themeReducer
     },
 })
 

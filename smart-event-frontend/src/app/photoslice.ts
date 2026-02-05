@@ -54,7 +54,6 @@ export const emptyFilters: GalleryFilters = {
     endDate: undefined,
 };
 
-
 const emptyPagination = {
     page: 1,
     hasMore: true,
@@ -133,10 +132,9 @@ export const fetchGalleryPhotos = createAsyncThunk(
             }
 
             /*  filters */
-            const filters =
-                context === 'event'
-                    ? state.photo.filters.event[event_id!]
-                    : state.photo.filters[context];
+            const filters = context === 'event'
+                ? state.photo.filters.event[event_id!]
+                : state.photo.filters[context];
 
             if (filters) {
                 if (filters.search) {
@@ -195,7 +193,7 @@ export const addPhotos = createAsyncThunk(
                     }
                 }
             )
-            return data
+            return { event_id }
         } catch (error) {
             return rejectWithValue(error?.response?.data || 'Something Went wrong')
         }
@@ -352,10 +350,7 @@ const photoSlice = createSlice({
                 state.photoIdsByContext[context] = [];
             }
         },
-        resetGalleryPagination: (
-            state,
-            action: PayloadAction<{ context: 'event' | 'favourites' | 'tagged'; event_id?: string }>
-        ) => {
+        resetGalleryPagination: (state, action: PayloadAction<{ context: 'event' | 'favourites' | 'tagged'; event_id?: string }>) => {
             const { context, event_id } = action.payload;
 
             if (context === 'event') {
@@ -409,11 +404,10 @@ const photoSlice = createSlice({
     extraReducers: (builder) => {
         builder
             // gallery
-
             .addCase(fetchGalleryPhotos.pending, (state, action) => {
                 const { context, event_id } = action.meta.arg;
 
-                if (context === 'event') {
+                if (context === 'event') { //if event is context
                     if (!state.pagination.event[event_id!]) {
                         state.pagination.event[event_id!] = {
                             page: 1,
@@ -505,6 +499,17 @@ const photoSlice = createSlice({
             state.selectedPhotoId = p.photo_id;
         });
 
+        builder.addCase(addPhotos.fulfilled, (state, action) => {
+            const { event_id } = action.payload;
+            // reset gallery 
+            state.pagination.event[event_id] = {
+                page: 1,
+                hasMore: true,
+                loading: false,
+            };
+
+            state.photoIdsByContext.event[event_id] = [];
+        });
 
         builder.addCase(updatePhotos.fulfilled, (state, action) => {
             const photo_ids = action.payload.photo_ids;

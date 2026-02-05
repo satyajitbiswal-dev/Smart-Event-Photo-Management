@@ -10,8 +10,8 @@ import React from 'react';
 import ResetPasswordDialog from '../../features/auth/ResetPassword';
 
 const Member = () => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isMobile = useMediaQuery('(max-width:900px)');
+
   const { username } = useParams()
 
   const [isEditable, setisEditable] = useState<boolean>(false)
@@ -395,11 +395,11 @@ alignItems={{ xs: "stretch", sm: "center" }} spacing={1}>
           <Stack mt={3} direction={{ xs: "column", sm: "row" }}
 alignItems={{ xs: "stretch", sm: "center" }} spacing={1}>
           {!isMobile && <Typography variant="h6" color="text.secondary" component={"span"}>
-            PhotoGrapher Dashboard :
+            PhotoGrapher Actions :
           </Typography>}
           <Box sx={{ width: { xs: "100%", sm: 400 } }}
 >
-            <TextField select value={selectedPhotographedEvent}
+            <TextField select value={selectedPhotographedEvent} label="Photographed-Events"
             onChange={(e) => setSelectedPhotographedEvent(e.target.value)} size='small' fullWidth>
               <MenuItem value="">Select an Event</MenuItem>
             {

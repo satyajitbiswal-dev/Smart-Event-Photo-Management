@@ -17,17 +17,12 @@ import { useDropzone } from "react-dropzone";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../../app/store";
-import { fetchEvents, selectEvent } from "../../../app/eventslice";
+import { fetchEvents } from "../../../app/eventslice";
 import { fetchUsers } from "../../../app/userslice";
-import { all } from "axios";
 import type { User } from "../../../types/types";
-// import { jsonToFormData } from "../../../features/JsonToFormData";
-import { addPhotos } from "../../../app/photoslice";
-
-/* ---------------- types ---------------- */
+import { addPhotos, fetchGalleryPhotos } from "../../../app/photoslice";
 
 
-/* ---------------- component ---------------- */
 export default function UploadPhoto() {
     const { event_id } = useParams()
     const allEvents = useSelector((state: RootState) => state.event.events)
@@ -95,6 +90,7 @@ export default function UploadPhoto() {
             taggedUsers.forEach(u => formData.append("tagged_users", u.email));
             await dispatch(addPhotos({data:formData, event_id:event_id})).unwrap()
             clearInputs()
+            dispatch(fetchGalleryPhotos({ context: "event", event_id }));
         } catch (error) {
             console.log(error);
             
@@ -299,7 +295,7 @@ export default function UploadPhoto() {
                 </Grid>
             </Grid>
 
-            {/* ---------- footer actions ---------- */}
+            {/* footer  */}
             <Stack
                 direction={{ xs: "column", sm: "row" }}
                 justifyContent="flex-end"

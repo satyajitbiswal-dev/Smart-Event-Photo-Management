@@ -1,11 +1,11 @@
-import { Box, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Box, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import ShareButton from '../buttons/ShareButton'
 import type { Event } from '../../types/types'
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/store';
 import { selectIsAuthenticated } from '../../app/authslice';
-import FolderZipIcon from '@mui/icons-material/FolderZip';
 import type { ReactNode } from 'react';
+import DownloadZIPPhotos from '../buttons/DownloadZIPPhotos';
 
 // event/017c4e91-f89e-4c27-8d40-522ca8a1f1e7/photos/
 
@@ -14,10 +14,11 @@ type headerProps = {
   subtitle: string,
   event: Event | null,
   viewMode: 'view' | 'bulk',
-  extraAction?:ReactNode
+  extraAction?:ReactNode,
+  mode:"event" | "favourites" | "tagged"
 }
 
-const GalleryHeader = ({ title, subtitle, event, viewMode, extraAction }: headerProps) => {
+const GalleryHeader = ({ title, subtitle, event, viewMode, extraAction,mode }: headerProps) => {
   const authuser = useSelector((state: RootState) => state.auth.user)
   const isAuthenticated = useSelector(selectIsAuthenticated)
 
@@ -55,12 +56,10 @@ const GalleryHeader = ({ title, subtitle, event, viewMode, extraAction }: header
           viewMode === 'view' &&
           <Stack direction="row" spacing={1} >
             {event && <ShareButton event={event} />}
-            {(isAuthenticated || authuser?.role !== "P") &&
-              <Tooltip title="ZIP Download">
+            {((isAuthenticated || authuser?.role !== "P") && mode==='event' )&&
+              <Tooltip title="Download All Photos">
                 <span>
-                  <IconButton>
-                    <FolderZipIcon />
-                  </IconButton>
+                  <DownloadZIPPhotos event_id={event?.id ?? ''} />
                 </span>
               </Tooltip>
 

@@ -13,4 +13,5 @@ urlpatterns = [
     path('<uuid:photo_id>/download/' , views.download_view),
     path('photographer/dashboard/' , photographer.DashBoardEventView.as_view()),
     path('<uuid:photo_id>/view/' , photographer.PhotoViewCountAPIView.as_view()),
+    path( "events/<uuid:id>/download-zip/",views.DownloadEventPhotosZip.as_view()),
 ]

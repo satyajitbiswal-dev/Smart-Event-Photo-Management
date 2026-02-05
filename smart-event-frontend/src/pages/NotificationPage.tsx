@@ -10,12 +10,15 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { clearAll, clearAllNotificationsAPI, deleteNotification, deleteNotificationAPI, markAllAsRead, markAllSeenAPI, markAsRead, markSeenAPI } from "../app/notificationslice";
 import type { Notification } from "../types/types";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import ClearAllNotificationsDialog from "../components/buttons/ClearAllDialog";
 dayjs.extend(relativeTime);
 
 const NotificationPage = () => {
   const notifications = useSelector((state: RootState) => state.notification.notifications)
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
+  const[open,setOpen] = useState<boolean>(false);
 
   //mark as read
   const handleSeen = (n: Notification) => {
@@ -32,10 +35,7 @@ const NotificationPage = () => {
   }
 
   // clear all
-  const handleClearAll = () => {
-    dispatch(clearAll())
-    clearAllNotificationsAPI()
-  }
+  
   // delete
   const handleDelete = (n: Notification) => {
     dispatch(deleteNotification(n.id));   // optimistic
@@ -44,11 +44,11 @@ const NotificationPage = () => {
 
 
   const handleForward = (n: Notification) => {
-    if(n.event_id){
-      console.log(n.event_id);     
+    if (n.event_id) {
+      console.log(n.event_id);
       navigate('event/:event_id/photos/')
     }
-    else if(n.photo_id){
+    else if (n.photo_id) {
       console.log(n.photo_id);
       navigate('')
     }
@@ -81,10 +81,15 @@ const NotificationPage = () => {
             Mark all read
           </Button>
           <Tooltip title="Clear all notifications">
-            <IconButton size="small" color="error" onClick={handleClearAll}>
+            <span>
+            <IconButton size="small" color="error" onClick={() => setOpen(true)}>
               <ClearAllIcon />
             </IconButton>
+              </span>
           </Tooltip>
+          <ClearAllNotificationsDialog open={open} onClose={() => setOpen(false)}
+              onCleared={() => dispatch(clearAll())}
+              />
         </Box>
 
       </Stack>
@@ -95,7 +100,7 @@ const NotificationPage = () => {
             mb: 1, borderRadius: 2,
             backgroundColor: n.is_seen ? "grey.100" : "primary.light",
             opacity: n.is_seen ? 0.65 : 1,
-            px: { xs: 1.5, sm: 2 },   py: { xs: 1, sm: 1.5 },
+            px: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.5 },
             cursor: "pointer",
             "&:hover": {
               backgroundColor: "action.hover",
@@ -104,7 +109,7 @@ const NotificationPage = () => {
               opacity: 1,
             },
           }}
-          onClick = {() => handleForward(n)}
+            onClick={() => handleForward(n)}
           >
             <Box display={'flex'} alignItems={'center'} width={'100%'}>
               {!n.is_seen && (
@@ -132,17 +137,18 @@ const NotificationPage = () => {
               >
                 {!n.is_seen && (
                   <Tooltip title="Mark as read">
-                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleSeen(n)}} >
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleSeen(n) }} >
                       <MarkEmailRead fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 )}
 
                 <Tooltip title="Delete">
-                  <IconButton size="small" color="error" 
-                  onClick={(e) =>  
-                    {e.stopPropagation() 
-                    handleDelete(n)}}>
+                  <IconButton size="small" color="error"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(n)
+                    }}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
